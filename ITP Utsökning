@@ -1,0 +1,49 @@
+USE Datawarehouse
+GO
+WITH ITP1or AS
+
+(SELECT 
+Rådgivare, Team, Företagsnamn, Orgnr, ITP1, ITP2, SnittÅrslön, FirstName, LastName, ContactData, (ROW_NUMBER() OVER (PARTITION BY Orgnr ORDER BY Orgnr)) AS RowNumber
+FROM 
+(SELECT r.Namn AS Rådgivare, r.Team, kf.Namn AS Företagsnamn, kf.Orgnr AS Orgnr, kf.KundforetagID
+  FROM [Datawarehouse].[dw].[Radgivare] r
+  JOIN [Datawarehouse].[dw].[Kundforetag] kf On r.RadgivarID = kf.RadgivarID) Namn
+  JOIN
+(SELECT kf.KundforetagID, COUNT(Avtalsomrade) AS ITP1
+  FROM [Datawarehouse].[dw].[Kund] k, [Datawarehouse].[dw].[Kundforetag] kf
+  WHERE kf.KundforetagID = k.KundforetagID
+  AND Avtalsomrade LIKE 'ITP avd 1%'
+  GROUP BY kf.KundforetagID) ITP1
+  ON Namn.KundforetagID = ITP1.KundforetagID
+  JOIN
+(SELECT kf.KundforetagID, COUNT(Avtalsomrade) AS ITP2
+  FROM [Datawarehouse].[dw].[Kund] k, [Datawarehouse].[dw].[Kundforetag] kf
+  WHERE kf.KundforetagID = k.KundforetagID
+  AND Avtalsomrade LIKE 'ITP avd 2%'
+  GROUP BY kf.KundforetagID) ITP2
+  ON ITP1.KundforetagID = ITP2.KundforetagID
+  JOIN
+(SELECT kf.KundforetagID, AVG(CONVERT(BIGINT, k.Arslon)) AS 'SnittÅrslön'
+  FROM [Datawarehouse].[dw].[Kund] k, [Datawarehouse].[dw].[Kundforetag] kf
+  WHERE kf.KundforetagID = k.KundforetagID
+  GROUP BY kf.KundforetagID) Snitt
+  ON ITP2.KundforetagID = Snitt.KundforetagID
+  LEFT JOIN
+(SELECT cp.xCompany, p.xID, p.FirstName, p.LastName
+  FROM [Datawarehouse].[stage].[pml_Person] p, [Datawarehouse].[stage].[pml_CompanyPerson] cp
+  WHERE p.xID = cp.xPerson
+  AND TypeOfRole IN('1', '2')) VD
+  ON Snitt.KundforetagID = VD.xCompany
+  LEFT JOIN
+(SELECT pc.xPerson, ci.ContactData
+  FROM [Datawarehouse].[stage].[pml_ContactInfo] ci
+  JOIN [Datawarehouse].[stage].[pml_PersonContact] pc ON ci.xID = pc.xContactInfo
+  WHERE pc.TypeOfContact LIKE '6') VD2
+  ON VD.xID = VD2.xPerson)
+
+  SELECT Rådgivare, Team, Företagsnamn, Orgnr, ITP1, ITP2, SnittÅrslön, FirstName, LastName, ContactData, RowNumber
+  FROM ITP1or
+  WHERE Orgnr IS NOT NULL
+  AND RowNumber = 1
+  GROUP BY Rådgivare, Team, Företagsnamn, Orgnr, ITP1, ITP2, SnittÅrslön, FirstName, LastName, ContactData, RowNumber 
+  ORDER BY ITP1 DESC
