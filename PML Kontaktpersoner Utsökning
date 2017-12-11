@@ -1,0 +1,19 @@
+SELECT DISTINCT Company, xID, FirstName, LastName, Email, Phone
+FROM (
+(SELECT cp.xCompany AS Company, p.xID, p.FirstName, p.LastName
+  FROM [Datawarehouse].[stage].[pml_Person] p
+  JOIN [Datawarehouse].[stage].[pml_CompanyPerson] cp
+  ON p.xID = cp.xPerson
+  WHERE TypeOfRole IN ('1')) VD
+  LEFT JOIN
+(SELECT pc.xPerson, ci.ContactData as Email
+  FROM [Datawarehouse].[stage].[pml_ContactInfo] ci
+  LEFT JOIN [Datawarehouse].[stage].[pml_PersonContact] pc ON ci.xID = pc.xContactInfo
+  WHERE pc.TypeOfContact LIKE '6') VD2
+  ON VD.xID = VD2.xPerson)
+  LEFT JOIN
+(SELECT pc.xPerson, ci.ContactData as Phone
+  FROM [Datawarehouse].[stage].[pml_ContactInfo] ci
+  LEFT JOIN [Datawarehouse].[stage].[pml_PersonContact] pc ON ci.xID = pc.xContactInfo
+  WHERE pc.TypeOfContact LIKE '4') VD3
+  ON VD2.xPerson = VD3.xPerson
