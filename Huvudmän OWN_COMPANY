@@ -17,3 +17,4 @@ SELECT xID, ssn, Namn, principalName, company, councelingReason FROM (
 	(SELECT Pnr, Namn
 	FROM [Datawarehouse].[dw].[Kund]) pnrSearch
 	ON jsonSearch.ssn = pnrSearch.Pnr)
+	ORDER BY xID
