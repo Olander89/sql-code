@@ -1,0 +1,19 @@
+SELECT xID, ssn, Namn, principalName, company, councelingReason FROM (
+	(SELECT  xID, Replace(ssn,'-', '') AS ssn, principalName, company, councelingReason
+	FROM [Datawarehouse].[dbo].[CounselingSessionData]
+	CROSS APPLY OPENJSON(json)
+	WITH(
+		councelingReason nvarchar(max) '$.attendants.customer.counselingReason.counselingReason',
+		principals nvarchar(max) '$.attendants.customer.principals[1]' AS JSON,
+		company nvarchar(max) '$.company'
+		)
+	CROSS APPLY OPENJSON(principals)
+	WITH(
+		principalName nvarchar(max) '$.principalName'
+		)
+	WHERE ISJSON(json) > 0
+	AND councelingReason LIKE 'OWN_COMPANY') jsonSearch
+	JOIN
+	(SELECT Pnr, Namn
+	FROM [Datawarehouse].[dw].[Kund]) pnrSearch
+	ON jsonSearch.ssn = pnrSearch.Pnr)
