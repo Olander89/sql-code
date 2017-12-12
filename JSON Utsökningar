@@ -1,0 +1,85 @@
+DECLARE @date datetime
+SET @date = '2017-12-31'
+
+SELECT
+cd.xID,				cd.json,	
+cd.ssn,				k.Namn,
+k.Fornamn,			k.Efternamn,
+cd.status,			cd.projectVersion,
+cd.createdDate,		cd.lastUpdated,
+cd.version,			besökstyp,
+kundTyp,			company,
+politicalPerson,	livingAbroad,
+identification,		remType,
+remAmount,			councelingReason,
+principals,			principalName
+	FROM [Datawarehouse].[dbo].[CounselingSessionData] cd
+	JOIN [Datawarehouse].[dw].[Kund] k ON replace(ssn, '-', '') = k.pnr
+	CROSS APPLY OPENJSON(json)
+	WITH(
+		besöksTyp nvarchar(max) '$.visitType',
+		kundTyp nvarchar(max) '$.customerType',
+		company nvarchar(max) '$.company',
+		politicalPerson nvarchar(max) '$.attendants.customer.politicalPerson',
+		livingAbroad nvarchar(max) '$.attendants.customer.livingAbroad',
+		identification nvarchar(max) '$.attendants.customer.identification.identificationType',
+		remType nvarchar(max)'$.remunerationModel.type',
+		remAmount nvarchar(max) '$.remunerationModel.amount',
+		councelingReason nvarchar(max) '$.attendants.customer.counselingReason.counselingReason',
+		principals nvarchar(max) '$.attendants.customer.principals[1]' AS JSON
+		)
+	CROSS APPLY OPENJSON(principals)
+	WITH(
+		principalName nvarchar(max) '$.principalName'
+		)
+	WHERE ISJSON(json) > 0
+	AND company NOT LIKE 'Test%'
+	AND councelingReason != 'OWN'
+	--AND principalName NOT LIKE 'hej%'
+	--AND principalName NOT LIKE 'test%'
+	--AND principalName NOT LIKE 'huvudmannen%'
+	--AND politicalPerson LIKE 'true'
+	--AND livingAbroad LIKE 'true'
+	AND status LIKE 'OPEN'
+	--AND lastUpdated > DATEADD(year,-1, @date)
+	ORDER BY councelingReason
+  
+ ===========================================================================================================================
+  
+  SELECT xID, ssn, principalName, company, councelingReason
+	FROM [Datawarehouse].[dbo].[CounselingSessionData]
+	CROSS APPLY OPENJSON(json)
+	WITH(
+		councelingReason nvarchar(max) '$.attendants.customer.counselingReason.counselingReason',
+		principals nvarchar(max) '$.attendants.customer.principals[1]' AS JSON,
+		company nvarchar(max) '$.company'
+		)
+	CROSS APPLY OPENJSON(principals)
+	WITH(
+		principalName nvarchar(max) '$.principalName'
+		)
+	WHERE ISJSON(json) > 0
+	AND councelingReason != 'OWN'
+	ORDER BY xID
+  
+ ===========================================================================================================================
+
+	SELECT DISTINCT councelingReason, COUNT(councelingReason) nbr
+		FROM [Datawarehouse].[dbo].[CounselingSessionData]
+		CROSS APPLY OPENJSON(json)
+		WITH(
+			councelingReason nvarchar(max) '$.attendants.customer.counselingReason.counselingReason'
+			)
+		WHERE ISJSON(json) > 0
+		GROUP BY councelingReason
+		Order BY nbr
+    
+ ===========================================================================================================================
+ 
+ DECLARE @json nvarchar(max)
+ SET @json= ''
+ 
+ SELECT *
+ FROM OPENJSON(@json)
+ 
+ ===========================================================================================================================
