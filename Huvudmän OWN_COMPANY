@@ -46,3 +46,22 @@ SELECT xID, ssn, Namn, principalName, company, councelingReason FROM (
 ==========================================================================================================================
 MULTIPLE_OWNER_COMPANY
 ==========================================================================================================================
+SELECT xID, principalSsn, principalName, company, councelingReason FROM (
+	SELECT xID, Replace(principalSsn,'-', '') AS principalSsn, principalName, company, councelingReason
+	FROM [Datawarehouse].[dbo].[CounselingSessionData]
+	CROSS APPLY OPENJSON(json)
+	WITH(
+		councelingReason nvarchar(max) '$.attendants.customer.counselingReason.counselingReason',
+		principals nvarchar(max) '$.attendants.customer.principals[1]' AS JSON,
+		company nvarchar(max) '$.company'
+		)
+	CROSS APPLY OPENJSON(principals)
+	WITH(
+		principalName nvarchar(max) '$.principalName',
+		principalSsn nvarchar(max) '$.principalSsn'
+		)
+	WHERE ISJSON(json) > 0
+	AND councelingReason LIKE 'MULTIPLE_OWNER_COMPANY'
+	AND company NOT LIKE '%test%') jsonSearch
+	ORDER BY xID
+==========================================================================================================================
