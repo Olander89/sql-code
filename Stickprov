@@ -1,0 +1,531 @@
+----------------------------------
+-- Urval av stickprovsförsäkringar
+----------------------------------
+
+/*
+Strategi:
+
+ - Utgå från företagen ÅF och Hewlett-Packard
+ - Plocka försäkringar från olika affärstyper
+ - Plocka försäkringar från samtliga försäkringsbolag
+ - Plocka försäkringar av olika typer (spar, sjuk, sjukv, fp, pbf, etc)
+
+*/
+
+
+--------------------------------------------------------------------------------------------------------
+-- Lista samtliga försäkringar inom ÅF och HP som finns i PML och som har genererat provision under 2015
+--------------------------------------------------------------------------------------------------------
+
+-- ÅF / Team Lund
+
+
+-- Lista alla försäkringar
+select * from sox.forsakring f
+where exists (select 1 from sox.orgnr o
+              where o.Orgnr = f.Orgnr
+                and o.Koncern = 'ÅF'
+                and o.TeamID = 68);
+
+--> 1227
+--> 1339 (Dec 2017)
+
+
+-- Kolla vilka av dessa som har genererat provision
+select * from sox.forsakring f
+where exists (select 1 from sox.orgnr o
+              where o.Orgnr = f.Orgnr
+                and o.Koncern = 'ÅF'
+                and o.TeamID = 68)
+  and exists (select 1 from sox.provision p
+              where p.Forsakringsbolag = f.Forsakringsbolag
+                and p.ForsakringsNr = f.ForsakringsNr);
+
+--> 882
+--> 1109 (Dec 2017)
+
+
+/*
+Momenttyper för försäkringar:
+
+Spar
+Premiebefrielse
+Sjuk
+Sjukvård
+Dödsfall
+Invaliditet
+Olycksfall
+*/
+
+
+-- Skapa urvalslista
+select f.Forsakringsbolag,
+       f.ForsakringsNr,
+       f.Affarstyp,
+       f.Produkttyp,
+       f.Tjp,
+       f.Lvxl,
+       f.Sjukvard,
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Spar')            then 'j' else 'n' end as 'OLD',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Premiebefrielse') then 'j' else 'n' end as 'PBF',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Sjuk')            then 'j' else 'n' end as 'SJU',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Sjukvård')        then 'j' else 'n' end as 'SJV',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Dödsfall')        then 'j' else 'n' end as 'EFT',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Invaliditet')     then 'j' else 'n' end as 'INV',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Olycksfall')      then 'j' else 'n' end as 'OLY'
+from sox.forsakring f
+where exists (select 1 from sox.orgnr o
+              where o.Orgnr = f.Orgnr
+                and o.Koncern = 'ÅF'
+                and o.TeamID = 68)
+  and exists (select 1 from sox.provision p
+              where p.Forsakringsbolag = f.Forsakringsbolag
+                and p.ForsakringsNr = f.ForsakringsNr)
+order by 1, 3, 4;
+
+--> 882
+--> 1109 (Dec 2017)
+
+
+-- Lägg in utvalda försäkringar i en temptabell
+/*
+Danica          -8002701
+Folksam         4
+Movestic        -8629972
+SEB             2
+Skandia         67
+SPP             3
+*/
+
+
+
+drop table #temp;
+
+create table #temp
+  (ForsakringsbolagID int, 
+   Forsakringsbolag varchar(30),
+   ForsakringsNr varchar(20));
+
+insert into #temp values (-8002701, 'Danica','70158077');
+insert into #temp values (-8002701, 'Danica','70150361');
+insert into #temp values (-8002701, 'Danica','70189303');
+insert into #temp values (-8002701, 'Danica','70037446');
+insert into #temp values (4, 'Folksam','IN1055755654');
+insert into #temp values (4, 'Folksam','IN1055746265');
+insert into #temp values (4, 'Folksam','IN1055731358');
+insert into #temp values (-8629972, 'Movestic','814970');
+insert into #temp values (-8629972, 'Movestic','855088');
+insert into #temp values (-8629972, 'Movestic','822466');
+insert into #temp values (-8629972, 'Movestic','794835');
+insert into #temp values (-8629972, 'Movestic','727736');
+insert into #temp values (2, 'SEB','90910002488');
+insert into #temp values (2, 'SEB','97000207826');
+insert into #temp values (2, 'SEB','97000157222');
+insert into #temp values (2, 'SEB','97000413339');
+insert into #temp values (2, 'SEB','97000294396');
+insert into #temp values (2, 'SEB','54562867949');
+insert into #temp values (2, 'SEB','54555950178');
+insert into #temp values (2, 'SEB','54561019359');
+insert into #temp values (67, 'Skandia','UL898469-6829-01');
+insert into #temp values (67, 'Skandia','S593783-2295-05');
+insert into #temp values (67, 'Skandia','S308057-3048-12');
+insert into #temp values (67, 'Skandia','S647058-0150-07');
+insert into #temp values (67, 'Skandia','S378607-1826-01');
+insert into #temp values (67, 'Skandia','S858116-2860-02');
+insert into #temp values (67, 'Skandia','S533934-2000-02');
+insert into #temp values (67, 'Skandia','S702796-0861-03');
+insert into #temp values (67, 'Skandia','S836564-0685-03');
+insert into #temp values (67, 'Skandia','S816862-9661-01');
+insert into #temp values (3, 'SPP','5312805');
+insert into #temp values (3, 'SPP','5382745');
+insert into #temp values (3, 'SPP','5467953');
+insert into #temp values (3, 'SPP','5395360');
+insert into #temp values (3, 'SPP','5437438');
+insert into #temp values (3, 'SPP','5461927');
+insert into #temp values (3, 'SPP','5484473');
+insert into #temp values (3, 'SPP','5485327');
+insert into #temp values (3, 'SPP','5485189');
+
+--> 39
+
+drop table #period;
+
+create table #period (Period char(7));
+
+insert into #period values ('2015-01');
+insert into #period values ('2015-02');
+insert into #period values ('2015-03');
+insert into #period values ('2015-04');
+insert into #period values ('2015-05');
+insert into #period values ('2015-06');
+insert into #period values ('2015-07');
+insert into #period values ('2015-08');
+insert into #period values ('2015-09');
+insert into #period values ('2015-10');
+insert into #period values ('2015-11');
+insert into #period values ('2015-12');
+
+
+-- Visa vilka försäkringar vi har valt ut
+select f.Forsakringsbolag,
+       f.ForsakringsNr,
+       f.Affarstyp,
+       f.Produkttyp,
+       f1.Datering,
+       f.Tjp,
+       f.Lvxl,
+       f.Sjukvard,
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Spar')            then 'j' else 'n' end as 'OLD',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Premiebefrielse') then 'j' else 'n' end as 'PBF',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Sjuk')            then 'j' else 'n' end as 'SJU',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Sjukvård')        then 'j' else 'n' end as 'SJV',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Dödsfall')        then 'j' else 'n' end as 'EFT'
+from #temp t, sox.forsakring f, dw.Forsakring f1
+where f.Forsakringsbolag = t.Forsakringsbolag
+  and f.ForsakringsNr = t.ForsakringsNr
+  and f1.ForsakringsbolagID = t.ForsakringsbolagID
+  and f1.ForsakringsNr = t.ForsakringsNr
+order by 1, 3, 4;
+
+
+-- Kolla vilken provision vi erhållit
+select t.*, p.*
+from #temp t, sox.forsakring f, sox.provision p
+where f.Forsakringsbolag = t.Forsakringsbolag
+  and f.ForsakringsNr = t.ForsakringsNr
+  and p.Forsakringsbolag = f.Forsakringsbolag
+  and p.ForsakringsNr = f.ForsakringsNr
+
+
+-- Kolla hur många av dessa försäkringar som har historik
+select count(*) from #temp t
+where exists (select 1 from dw.Hist_Kapital hk
+              where hk.ForsakringsbolagID = t.ForsakringsbolagID
+                and hk.ForsakringsNr = t.ForsakringsNr)
+
+--> 36
+
+/*
+Saknade försäkringar:
+
+SEB: 90910002488
+Skandia: S647058-0150-07
+Skandia: S816862-9661-01
+*/
+
+
+select f.ForsakringsNr,
+       f.Premie
+from dw.Forsakring f 
+where f.ForsakringsNr in ('90910002488', 'S647058-0150-07', 'S816862-9661-01');
+
+
+
+-- Visa historiska premier för sparade försäkringar
+select t.Forsakringsbolag,
+       t.ForsakringsNr,
+       pe.Period,
+       convert(int, avg(hk.Premie)) as Premie,
+       convert(int, avg(hk.Varde)) as Varde
+from #temp t, dw.Hist_Kapital hk, #period pe
+where hk.ForsakringsbolagID = t.ForsakringsbolagID
+  and hk.ForsakringsNr = t.ForsakringsNr
+  and left(hk.Datum, 7) = pe.Period
+group by t.Forsakringsbolag,
+         t.ForsakringsNr,
+         pe.Period
+order by t.Forsakringsbolag,
+         t.ForsakringsNr,
+         pe.Period;
+
+--> 384
+
+
+/*
+Premieersättning
+Engångspremie
+Up-front
+Kapitalersättning
+Konverteringsavgift
+Korrigeringar
+Manuell transaktion
+Återtag
+Annullation
+Provision
+*/
+
+-- Visa provision per månad
+select t.Forsakringsbolag,
+       t.ForsakringsNr,
+       pe.Period,
+       (select convert(int, sum(Provision)) from tmp_Provision p
+        where p.ForsakringsbolagID = t.ForsakringsbolagID
+          and p.ForsakringsNr = t.ForsakringsNr
+          and p.Period = pe.Period) as TotaltProvision,
+       (select convert(int, sum(Provision)) from tmp_Provision p
+        where p.ForsakringsbolagID = t.ForsakringsbolagID
+          and p.ForsakringsNr = t.ForsakringsNr
+          and p.Period = pe.Period
+          and p.Provisionstyp = 'Premieersättning') as Premieersattning,
+       (select convert(int, sum(Provision)) from tmp_Provision p
+        where p.ForsakringsbolagID = t.ForsakringsbolagID
+          and p.ForsakringsNr = t.ForsakringsNr
+          and p.Period = pe.Period
+          and p.Provisionstyp = 'Engångspremie') as Engangspremie,
+       (select convert(int, sum(Provision)) from tmp_Provision p
+        where p.ForsakringsbolagID = t.ForsakringsbolagID
+          and p.ForsakringsNr = t.ForsakringsNr
+          and p.Period = pe.Period
+          and p.Provisionstyp = 'Up-front') as Upfront,
+       (select convert(int, sum(Provision)) from tmp_Provision p
+        where p.ForsakringsbolagID = t.ForsakringsbolagID
+          and p.ForsakringsNr = t.ForsakringsNr
+          and p.Period = pe.Period
+          and p.Provisionstyp = 'Kapitalersättning') as Kapitalersattning,
+       (select convert(int, sum(Provision)) from tmp_Provision p
+        where p.ForsakringsbolagID = t.ForsakringsbolagID
+          and p.ForsakringsNr = t.ForsakringsNr
+          and p.Period = pe.Period
+          and p.Provisionstyp = 'Återtag') as Atertag,
+       (select convert(int, sum(Provision)) from tmp_Provision p
+        where p.ForsakringsbolagID = t.ForsakringsbolagID
+          and p.ForsakringsNr = t.ForsakringsNr
+          and p.Period = pe.Period
+          and p.Provisionstyp = 'Annullation') as Annullation
+from #temp t, #period pe
+order by t.Forsakringsbolag,
+         t.ForsakringsNr,
+         pe.Period;
+
+
+
+
+-- Hewlett Packard / Team Hermes
+
+
+-- Lista alla försäkringar
+select * from sox.forsakring f
+where exists (select 1 from sox.orgnr o
+              where o.Orgnr = f.Orgnr
+                and o.Foretag = 'Hewlett Packard Sverige AB'
+                and o.TeamID = -25658563);
+
+--> 1960
+--> 756 (Dec 2017)
+
+
+-- Kolla vilka av dessa som har genererat provision
+select * from sox.forsakring f
+where exists (select 1 from sox.orgnr o
+              where o.Orgnr = f.Orgnr
+                and o.Foretag = 'Hewlett Packard Sverige AB'
+                and o.TeamID = -25658563)
+  and exists (select 1 from sox.provision p
+              where p.Forsakringsbolag = f.Forsakringsbolag
+                and p.ForsakringsNr = f.ForsakringsNr);
+
+--> 1076
+--> 432 (Dec 2017)
+
+
+-- Skapa urvalslista
+select f.Forsakringsbolag,
+       f.ForsakringsNr,
+       f.Affarstyp,
+       f.Produkttyp,
+       f.Tjp,
+       f.Lvxl,
+       f.Sjukvard,
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Spar')            then 'j' else 'n' end as 'OLD',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Premiebefrielse') then 'j' else 'n' end as 'PBF',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Sjuk')            then 'j' else 'n' end as 'SJU',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Sjukvård')        then 'j' else 'n' end as 'SJV',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Dödsfall')        then 'j' else 'n' end as 'EFT',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Invaliditet')     then 'j' else 'n' end as 'INV',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Olycksfall')      then 'j' else 'n' end as 'OLY'
+from sox.forsakring f
+where exists (select 1 from sox.orgnr o
+              where o.Orgnr = f.Orgnr
+                and o.Foretag = 'Hewlett Packard Sverige AB'
+                and o.TeamID = -25658563)
+  and exists (select 1 from sox.provision p
+              where p.Forsakringsbolag = f.Forsakringsbolag
+                and p.ForsakringsNr = f.ForsakringsNr)
+order by 1, 3, 4;
+
+--> 1076
+--> 432 (Dec 2017)
+
+
+-- Lägg in utvalda försäkringar i en temptabell
+/*
+Danica          -8002701
+Folksam         4
+Movestic        -8629972
+SEB             2
+Skandia         67
+SPP             3
+*/
+
+
+drop table #temp;
+
+create table #temp
+  (ForsakringsbolagID int, 
+   Forsakringsbolag varchar(30),
+   ForsakringsNr varchar(20));
+
+insert into #temp values (-8002701, 'Danica','70048389');
+insert into #temp values (-8002701, 'Danica','70030886');
+insert into #temp values (4, 'Folksam','IN5063899818');
+insert into #temp values (4, 'Folksam','IN1055740425');
+insert into #temp values (-8629972, 'Movestic','680484');
+insert into #temp values (-8629972, 'Movestic','752180');
+insert into #temp values (-8629972, 'Movestic','753944');
+insert into #temp values (2, 'SEB','97000205087');
+insert into #temp values (2, 'SEB','97000089855');
+insert into #temp values (2, 'SEB','54560618100');
+insert into #temp values (2, 'SEB','54552335243');
+insert into #temp values (67, 'Skandia','S767451-8806-01');
+insert into #temp values (67, 'Skandia','S305197-7459-01');
+insert into #temp values (67, 'Skandia','S501866-2587-02');
+insert into #temp values (67, 'Skandia','S708302-6516-05');
+insert into #temp values (67, 'Skandia','S892301-9083-07');
+insert into #temp values (3, 'SPP','5370775');
+insert into #temp values (3, 'SPP','5370598');
+
+insert into #temp values (-8002701, 'Danica','70208037');
+insert into #temp values (-8629972, 'Movestic','741531');
+insert into #temp values (2, 'SEB','97000121238');
+insert into #temp values (67, 'Skandia','S274668-2458-12');
+insert into #temp values (3, 'SPP','5370726');
+
+ 
+--> 18
+
+
+-- Visa vilka försäkringar vi har valt ut
+2011-04-01
+--> 18
+
+
+-- Kolla hur många av dessa försäkringar som har historik
+select count(*) from #temp t
+where exists (select 1 from dw.Hist_Kapital hk
+              where hk.ForsakringsbolagID = t.ForsakringsbolagID
+                and hk.ForsakringsNr = t.ForsakringsNr);
+
+--> 16
+
+
+/*
+Saknade försäkringar:
+
+Skandia: S501866-2587-02
+Skandia: S708302-6516-05
+*/
+
+
+select f.ForsakringsNr,
+       f.Premie
+from dw.Forsakring f 
+where f.ForsakringsNr in ('S501866-2587-02', 'S708302-6516-05');
+
+
+
+-- Visa historiska premier för sparade försäkringar
+select t.Forsakringsbolag,
+       t.ForsakringsNr,
+       t.Period,
+       convert(int, avg(hk.Premie)) as Premie,
+       convert(int, avg(hk.Varde)) as Varde
+from (select t.ForsakringsbolagID,
+             t.Forsakringsbolag,
+             t.ForsakringsNr,
+             pe.Period
+      from #temp t, #period pe) as t
+left outer join dw.Hist_Kapital hk on  hk.ForsakringsbolagID = t.ForsakringsbolagID
+                                   and hk.ForsakringsNr = t.ForsakringsNr
+                                   and left(hk.Datum, 7) = t.Period
+group by t.ForsakringsbolagID,
+         t.Forsakringsbolag,
+         t.ForsakringsNr,
+         t.Period
+order by t.Forsakringsbolag,
+         t.ForsakringsNr,
+         t.Period;
+
+--> 216
+
+
+/*
+Premieersättning
+Engångspremie
+Up-front
+Kapitalersättning
+Konverteringsavgift
+Korrigeringar
+Manuell transaktion
+Återtag
+Annullation
+Provision
+*/
+
+-- Visa provision per månad
+select t.Forsakringsbolag,
+       t.ForsakringsNr,
+       pe.Period,
+       (select convert(int, sum(Provision)) from tmp_Provision p
+        where p.ForsakringsbolagID = t.ForsakringsbolagID
+          and p.ForsakringsNr = t.ForsakringsNr
+          and p.Period = pe.Period) as TotaltProvision,
+       (select convert(int, sum(Provision)) from tmp_Provision p
+        where p.ForsakringsbolagID = t.ForsakringsbolagID
+          and p.ForsakringsNr = t.ForsakringsNr
+          and p.Period = pe.Period
+          and p.Provisionstyp = 'Premieersättning') as Premieersattning,
+       (select convert(int, sum(Provision)) from tmp_Provision p
+        where p.ForsakringsbolagID = t.ForsakringsbolagID
+          and p.ForsakringsNr = t.ForsakringsNr
+          and p.Period = pe.Period
+          and p.Provisionstyp = 'Engångspremie') as Engangspremie,
+       (select convert(int, sum(Provision)) from tmp_Provision p
+        where p.ForsakringsbolagID = t.ForsakringsbolagID
+          and p.ForsakringsNr = t.ForsakringsNr
+          and p.Period = pe.Period
+          and p.Provisionstyp = 'Up-front') as Upfront,
+       (select convert(int, sum(Provision)) from tmp_Provision p
+        where p.ForsakringsbolagID = t.ForsakringsbolagID
+          and p.ForsakringsNr = t.ForsakringsNr
+          and p.Period = pe.Period
+          and p.Provisionstyp = 'Kapitalersättning') as Kapitalersattning,
+       (select convert(int, sum(Provision)) from tmp_Provision p
+        where p.ForsakringsbolagID = t.ForsakringsbolagID
+          and p.ForsakringsNr = t.ForsakringsNr
+          and p.Period = pe.Period
+          and p.Provisionstyp = 'Återtag') as Atertag,
+       (select convert(int, sum(Provision)) from tmp_Provision p
+        where p.ForsakringsbolagID = t.ForsakringsbolagID
+          and p.ForsakringsNr = t.ForsakringsNr
+          and p.Period = pe.Period
+          and p.Provisionstyp = 'Annullation') as Annullation
+from #temp t, #period pe
+order by t.Forsakringsbolag,
+         t.ForsakringsNr,
+         pe.Period;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
