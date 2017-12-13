@@ -1,0 +1,13 @@
+SELECT Radgivare, Team, Orgnr, Foretagsnamn, Affarstyp
+FROM(
+(SELECT kf.RadgivarID, f.KundforetagID, f.Orgnr, kf.Namn as Foretagsnamn, f.Affarstyp
+  FROM [Datawarehouse].[sox].[forsakring] f
+  JOIN [Datawarehouse].[dw].[Kundforetag] kf
+  ON f.KundforetagID = kf.KundforetagID
+  WHERE f.Affarstyp LIKE 'Maxplan PC') maxPC
+JOIN
+(SELECT r.Team, r.Namn AS Radgivare, r.RadgivarID
+  FROM [Datawarehouse].[dw].[Radgivare] r) rad
+  ON maxPC.RadgivarID = rad.RadgivarID)
+GROUP BY Radgivare, Team, Orgnr, Foretagsnamn, Affarstyp
+ORDER BY Radgivare
