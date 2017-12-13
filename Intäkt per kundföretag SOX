@@ -1,0 +1,238 @@
+------------------------------------------
+-- SOX - Fördjupad analys och stickprov --
+------------------------------------------
+
+
+-- Producera lista med intäkt per företag/koncern - baserat på underlag för Årsgenomgång
+select coalesce(ko.Foretag, ko.Koncern) as 'Företag',
+       t.Team                           as 'Team',
+       ko.Affarstyp                     as 'Affärstyp',
+       ko.ProcentProvision              as 'Ersättning %',
+       ko.PremieTotalt                  as 'Premie totalt',
+       ko.PremieTjp                     as 'Premie tjp',
+       ko.PremieLvxl                    as 'Premie lvxl',
+       ko.PremieSjuk                    as 'Premie sjuk',
+       ko.PremieSjukv                   as 'Premie sjukv',
+       ko.PremiePBF                     as 'Premie PBF',
+       ko.PremieOvrigt                  as 'Premie övr',
+       ko.Intakt                        as 'Intäkt totalt',
+       ko.IntaktTeam                    as 'Intäkt team',
+       ko.Provision                     as 'Prov totalt',
+       ko.ProvisionTeam                 as 'Prov team',
+       ko.ProvPremieersattning          as 'Prov premie',
+       ko.ProvEngangspremie             as 'Prov engångs ',
+       ko.ProvKapitalersattning         as 'Prov kapital',
+       ko.ProvNavigera                  as 'Prov Navigera',
+       ko.ProvOvrigt                    as 'Prov övrigt',
+       ko.Arvode                        as 'Arvode',
+       ko.ArvodeTeam                    as 'Arvode team'
+from sox.koncern ko, dw.Team t
+where t.TeamID = ko.TeamID
+order by ko.Intakt desc;
+
+
+-- Hämta data direkt från provisionstabellen
+select KoncernID,
+       coalesce(ko.Foretag, ko.Koncern) as 'Företag',
+       t.Team                           as 'Team',
+       ko.Affarstyp                     as 'Affärstyp',
+       ko.ProcentProvision              as 'Ersättning %',
+       ko.PremieTotalt                  as 'Premie totalt',
+       ko.PremieTjp                     as 'Premie tjp',
+       ko.PremieLvxl                    as 'Premie lvxl',
+       ko.PremieSjuk                    as 'Premie sjuk',
+       ko.PremieSjukv                   as 'Premie sjukv',
+       ko.PremiePBF                     as 'Premie PBF',
+       ko.PremieOvrigt                  as 'Premie övr',
+       (select sum(p.Provision) from sox.orgnr o, sox.provision p
+        where o.KoncernID = ko.KoncernID
+          and p.Orgnr = o.Orgnr)                                                                as 'Prov totalt',
+       (select sum(p.Provision) from sox.orgnr o, sox.provision p
+        where o.KoncernID = ko.KoncernID
+          and p.Orgnr = o.Orgnr
+          and p.Provisionstyp = 'Premieersättning')                                             as 'Prov premie',
+       (select sum(p.Provision) from sox.orgnr o, sox.provision p
+        where o.KoncernID = ko.KoncernID
+          and p.Orgnr = o.Orgnr
+          and p.Provisionstyp in ('Engångspremie', 'Up-front', 'Annullation', 'Återtag'))       as 'Prov engångs',
+       (select sum(p.Provision) from sox.orgnr o, sox.provision p
+        where o.KoncernID = ko.KoncernID
+          and p.Orgnr = o.Orgnr
+          and p.Provisionstyp = 'Kapitalersättning'
+          and p.Produktgrupp != 'Navigera')                                                     as 'Prov kapital',
+       (select sum(p.Provision) from sox.orgnr o, sox.provision p
+        where o.KoncernID = ko.KoncernID
+          and p.Orgnr = o.Orgnr
+          and p.Provisionstyp = 'Kapitalersättning'
+          and p.Produktgrupp = 'Navigera')                                                      as 'Prov Navigera',
+       (select sum(p.Provision) from sox.orgnr o, sox.provision p
+        where o.KoncernID = ko.KoncernID
+          and p.Orgnr = o.Orgnr
+          and p.Provisionstyp in ('Konverteringsavgift', 'Provision'))                          as 'Prov övrigt',
+       (select sum(p.Provision) from sox.orgnr o, sox.provision p
+        where o.KoncernID = ko.KoncernID
+          and p.Orgnr = o.Orgnr
+          and p.Mottagartyp = 'Kundföretag')                                                    as 'Prov kund',
+       (select sum(a.Belopp) from sox.orgnr o, sox.arvode a
+        where o.KoncernID = ko.KoncernID
+          and a.Orgnr = o.Orgnr)                                                                as 'Arvode'
+from AG2016.sox.koncern ko, AG2016.sox.Team t
+where t.TeamID = ko.TeamID
+order by 13 desc;
+
+-- 13262
+
+-- Utsökning till Eva Pantzar
+select coalesce(ko.Foretag, ko.Koncern) as 'Företag',
+       t.Team                           as 'Team',
+       ko.Affarstyp                     as 'Affärstyp',
+       ko.ProcentProvision              as 'Prov %',
+       ko.PremieTotalt                  as 'Premie totalt',
+       ko.PremieTjp                     as 'Premie tjp',
+       ko.PremieLvxl                    as 'Premie lvxl',
+       ko.PremieSjuk                    as 'Premie sjuk',
+       ko.PremieSjukv                   as 'Premie sjukv',
+       ko.PremiePBF                     as 'Premie PBF',
+       ko.PremieOvrigt                  as 'Premie övr',
+       (select sum(p.Provision) from sox.orgnr o, sox.provision p
+        where o.KoncernID = ko.KoncernID
+          and p.Orgnr = o.Orgnr)                                                                as 'Prov totalt',
+       (select sum(p.Provision) from sox.orgnr o, sox.provision p
+        where o.KoncernID = ko.KoncernID
+          and p.Orgnr = o.Orgnr
+          and p.Provisionstyp = 'Premieersättning')                                             as 'Prov premie',
+       (select sum(p.Provision) from sox.orgnr o, sox.provision p
+        where o.KoncernID = ko.KoncernID
+          and p.Orgnr = o.Orgnr
+          and p.Provisionstyp in ('Engångspremie', 'Up-front', 'Annullation', 'Återtag'))       as 'Prov engångs',
+       (select sum(p.Provision) from sox.orgnr o, sox.provision p
+        where o.KoncernID = ko.KoncernID
+          and p.Orgnr = o.Orgnr
+          and p.Provisionstyp = 'Kapitalersättning'
+          and p.Produktgrupp != 'Navigera')                                                     as 'Prov kapital',
+       (select sum(p.Provision) from sox.orgnr o, sox.provision p
+        where o.KoncernID = ko.KoncernID
+          and p.Orgnr = o.Orgnr
+          and p.Provisionstyp = 'Kapitalersättning'
+          and p.Produktgrupp = 'Navigera')                                                      as 'Prov Navigera',
+       (select sum(p.Provision) from sox.orgnr o, sox.provision p
+        where o.KoncernID = ko.KoncernID
+          and p.Orgnr = o.Orgnr
+          and p.Provisionstyp in ('Konverteringsavgift', 'Provision'))                          as 'Prov övrigt',
+       (select sum(p.Provision) from sox.orgnr o, sox.provision p
+        where o.KoncernID = ko.KoncernID
+          and p.Orgnr = o.Orgnr
+          and p.Mottagartyp = 'Kundföretag')                                                    as 'Klientmedel',
+       (select sum(a.Belopp) from sox.orgnr o, sox.arvode a
+        where o.KoncernID = ko.KoncernID
+          and a.Orgnr = o.Orgnr)                                                                as 'Arvode'
+from sox.koncern ko, dw.Team t
+where t.TeamID = ko.TeamID
+--  and ko.KoncernID in (231, 6156, 84, 9056, 277, 385, 209, 71, 29, 322, 38, 281, 9220, 354, 104, 19, 362, 43)
+  and ko.KoncernID in (94, 178, 9287, 83, 217, 333, 5346, 314, 96, 36, 37)
+order by 12 desc;
+
+
+
+/*
+Lämnar Max Matthiessen:
+
+Medtronic
+
+Preem koncernen
+
+Qlicktech koncernen (5564722691, 5564810355)
+
+Catena
+
+Cisco Systems Sweden AB 
+
+
+Sänker provisionsnivån:
+
+Peab
+
+ÅF
+
+Lantmännen
+
+Bravida
+
+Apollo
+
+Spendrups Bryggerier
+
+Atea?
+
+PostNord
+
+ABG Sundal Collier
+
+Tetra Pak
+
+
+
+Förbjuder Navigera:
+
+Peab
+
+ÅF
+
+Deloitte
+
+Tetra Pak
+
+Alfa Laval
+
+Trelleborg?
+
+Lantmännen
+
+Autoliv?
+
+Spendrups?
+
+
+
+Ligger kvar på 6%:
+
+Dahl-koncernen
+ICA-koncernen
+Philips
+Castellum
+LKAB
+Studsvik
+Ascom
+Assa Abloy - ?
+SJ
+Danir
+
+
+Har kvar Navigera:
+
+Philips
+Castellum
+LKAB
+Studsvik
+SJ
+
+
+*/
+
+94, 178, 9287, 83, 217, 333, 5346, 314, 96, 36, 37
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
