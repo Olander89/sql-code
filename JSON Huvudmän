@@ -46,8 +46,12 @@ SELECT xID, ssn, Namn, principalName, company, councelingReason FROM (
 ==========================================================================================================================
 MULTIPLE_OWNER_COMPANY
 ==========================================================================================================================
-SELECT xID, principalSsn, principalName, company, councelingReason FROM (
-	SELECT xID, Replace(principalSsn,'-', '') AS principalSsn, principalName, company, councelingReason
+USE Datawarehouse
+GO
+WITH Multiple AS
+
+  (SELECT DISTINCT principalSsn, principalName, company, councelingReason, (ROW_NUMBER() OVER (PARTITION BY principalSsn ORDER BY company)) AS RowNumber FROM (
+	SELECT Replace(principalSsn,'-', '') AS principalSsn, principalName, company, councelingReason
 	FROM [Datawarehouse].[dbo].[CounselingSessionData]
 	CROSS APPLY OPENJSON(json)
 	WITH(
@@ -62,6 +66,12 @@ SELECT xID, principalSsn, principalName, company, councelingReason FROM (
 		)
 	WHERE ISJSON(json) > 0
 	AND councelingReason LIKE 'MULTIPLE_OWNER_COMPANY'
-	AND company NOT LIKE '%test%') jsonSearch
-	ORDER BY xID
+	AND company NOT LIKE '%test%') jsonSearch)
+
+   SELECT DISTINCT principalSsn, principalName, company, councelingReason, Rownumber--, STUFF(principalSsn, 1, 2, '')
+   FROM Multiple
+   WHERE RowNumber = 1
+   AND LEN(principalSsn) != '12'
+   GROUP BY principalSsn, principalName, company, councelingReason, Rownumber--, STUFF(principalSsn, 1, 2, '')
+   ORDER BY company
 ==========================================================================================================================
