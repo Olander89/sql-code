@@ -21,7 +21,7 @@ ORDER BY AntalAnstallda DESC
 
 *** Med AntalForsakrade av AntalAnstallda ***
 
-SELECT Radgivare, Team, maxPC.Orgnr, Foretagsnamn, Koncern, Affarstyp, AntalAnstallda, AntalForsakrade
+SELECT Radgivare, Team, maxPC.Orgnr, Foretagsnamn, Koncern, Affarstyp, AntalAnstallda, GallandeForsakringar
 FROM(
 (SELECT kf.RadgivarID, f.KundforetagID, f.Orgnr, f.Koncern, kf.Namn as Foretagsnamn, f.Affarstyp
   FROM [Datawarehouse].[sox].[forsakring] f
@@ -38,10 +38,15 @@ JOIN
   FROM [Datawarehouse].[sox].[koncern] k) koncern
   ON  maxPC.Orgnr = koncern.kOrgnr)
 JOIN
-(SELECT k.KundforetagID, kf.Orgnr, COUNT(*) as AntalForsakrade
-  FROM [Datawarehouse].[dw].[Kund] k, [Datawarehouse].[dw].[Kundforetag] kf
-  WHERE k.KundforetagID = kf.KundforetagID
-  GROUP BY k.KundforetagID, kf.Orgnr) forsakrade
-  ON maxPC.Orgnr = forsakrade.Orgnr
-GROUP BY Radgivare, Team, maxPC.Orgnr, Foretagsnamn, Koncern, Affarstyp, AntalAnstallda, AntalForsakrade
+(SELECT KundforetagID, COUNT(forsakring.KundID) GallandeForsakringar FROM
+  (SELECT DISTINCT f.KundID
+  FROM [Datawarehouse].[dw].[Forsakring] f
+  WHERE Status LIKE 'Gällande') forsakring
+  JOIN
+  (SELECT k.KundforetagID, k.KundID
+  FROM [Datawarehouse].[dw].[Kund] k) kund
+  ON forsakring.KundID = kund.KundID
+  GROUP BY KundforetagID) forsakrade
+  ON maxPC.KundforetagID = forsakrade.KundforetagID
+GROUP BY Radgivare, Team, maxPC.Orgnr, Foretagsnamn, Koncern, Affarstyp, AntalAnstallda, GallandeForsakringar
 ORDER BY AntalAnstallda DESC
