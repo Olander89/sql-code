@@ -19,9 +19,9 @@ ORDER BY AntalAnstallda DESC
 
 ====================================================================================================================
 
-*** Med AntalForsakrade av AntalAnstallda ***
+*** Med AntalForsakrade av AntalAnstallda, samt TotalPremie ***
 
-SELECT Radgivare, Team, maxPC.Orgnr, Foretagsnamn, Koncern, Affarstyp, AntalAnstallda, GallandeForsakringar
+SELECT Radgivare, Team, maxPC.Orgnr, Foretagsnamn, Koncern, Affarstyp, AntalAnstallda, GallandeForsakringar, TotalPremie
 FROM(
 (SELECT kf.RadgivarID, f.KundforetagID, f.Orgnr, f.Koncern, kf.Namn as Foretagsnamn, f.Affarstyp
   FROM [Datawarehouse].[sox].[forsakring] f
@@ -38,15 +38,16 @@ JOIN
   FROM [Datawarehouse].[sox].[koncern] k) koncern
   ON  maxPC.Orgnr = koncern.kOrgnr)
 JOIN
-(SELECT KundforetagID, COUNT(forsakring.KundID) GallandeForsakringar FROM
-  (SELECT DISTINCT f.KundID
+(SELECT KundforetagID, COUNT(forsakring.KundID) AS GallandeForsakringar, SUM(forsakring.Premie) AS TotalPremie FROM
+  (SELECT DISTINCT f.KundID, SUM(f.Premie) AS Premie
   FROM [Datawarehouse].[dw].[Forsakring] f
-  WHERE Status LIKE 'Gällande') forsakring
+  WHERE Status LIKE 'Gällande'
+  GROUP BY f.KundID) forsakring
   JOIN
   (SELECT k.KundforetagID, k.KundID
   FROM [Datawarehouse].[dw].[Kund] k) kund
   ON forsakring.KundID = kund.KundID
   GROUP BY KundforetagID) forsakrade
   ON maxPC.KundforetagID = forsakrade.KundforetagID
-GROUP BY Radgivare, Team, maxPC.Orgnr, Foretagsnamn, Koncern, Affarstyp, AntalAnstallda, GallandeForsakringar
+GROUP BY Radgivare, Team, maxPC.Orgnr, Foretagsnamn, Koncern, Affarstyp, AntalAnstallda, GallandeForsakringar, TotalPremie
 ORDER BY AntalAnstallda DESC
