@@ -16,3 +16,32 @@ JOIN
   ON  maxPC.Orgnr = koncern.kOrgnr)
 GROUP BY Radgivare, Team, Orgnr, Foretagsnamn, Koncern, Affarstyp, AntalAnstallda
 ORDER BY AntalAnstallda DESC
+
+====================================================================================================================
+
+*** Med AntalForsakrade av AntalAnstallda ***
+
+SELECT Radgivare, Team, maxPC.Orgnr, Foretagsnamn, Koncern, Affarstyp, AntalAnstallda, AntalForsakrade
+FROM(
+(SELECT kf.RadgivarID, f.KundforetagID, f.Orgnr, f.Koncern, kf.Namn as Foretagsnamn, f.Affarstyp
+  FROM [Datawarehouse].[sox].[forsakring] f
+  JOIN [Datawarehouse].[dw].[Kundforetag] kf
+  ON f.KundforetagID = kf.KundforetagID
+  WHERE f.Affarstyp LIKE 'Maxplan PC'
+  GROUP BY RadgivarID, f.KundforetagID, f.Orgnr, f.Koncern, kf.Namn, Affarstyp, f.Pnr) maxPC
+JOIN
+(SELECT r.Team, r.Namn AS Radgivare, r.RadgivarID
+  FROM [Datawarehouse].[dw].[Radgivare] r) rad
+  ON maxPC.RadgivarID = rad.RadgivarID
+JOIN
+(SELECT k.Orgnr AS kOrgnr, k.AntalAnstallda
+  FROM [Datawarehouse].[sox].[koncern] k) koncern
+  ON  maxPC.Orgnr = koncern.kOrgnr)
+JOIN
+(SELECT k.KundforetagID, kf.Orgnr, COUNT(*) as AntalForsakrade
+  FROM [Datawarehouse].[dw].[Kund] k, [Datawarehouse].[dw].[Kundforetag] kf
+  WHERE k.KundforetagID = kf.KundforetagID
+  GROUP BY k.KundforetagID, kf.Orgnr) forsakrade
+  ON maxPC.Orgnr = forsakrade.Orgnr
+GROUP BY Radgivare, Team, maxPC.Orgnr, Foretagsnamn, Koncern, Affarstyp, AntalAnstallda, AntalForsakrade
+ORDER BY AntalAnstallda DESC
