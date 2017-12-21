@@ -51,3 +51,16 @@ JOIN
   ON maxPC.KundforetagID = forsakrade.KundforetagID
 GROUP BY Radgivare, Team, maxPC.Orgnr, Foretagsnamn, Koncern, Affarstyp, AntalAnstallda, GallandeForsakringar, TotalPremie
 ORDER BY AntalAnstallda DESC
+
+==========================================================================================================================
+
+*** För koll av enskilt KundforetagID och dess Premier per KundID ***
+
+SELECT k.KundforetagID, k.KundID, SUM(f.Premie) AS Premie
+FROM [Datawarehouse].[dw].[Forsakring] f
+JOIN [Datawarehouse].[dw].[Kund] k ON f.KundID = k.KundID
+WHERE Status = 'Gällande'
+AND k.KundforetagID = '-33874271'
+GROUP BY k.KundforetagID, k.KundID
+
+==========================================================================================================================
