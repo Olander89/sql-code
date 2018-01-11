@@ -1,0 +1,61 @@
+/****** Script for SelectTopNRows command from SSMS  ******/
+SELECT ForsakringsNr, Pnr, ForsakringstagareNr, Datering, Status, Produkttyp, AvtalsNr, Affarstyp, Varde, Trad, Fond, Depa, Navigera FROM (
+(SELECT * FROM linda.Benefit b
+WHERE policyHolderNumber = '16556229-5666'
+AND insuranceState = 'PAID_UP_POLICY_STATE'
+OR policyHolderNumber = '16556028-0611'
+AND insuranceState = 'PAID_UP_POLICY_STATE'
+OR policyHolderNumber = '16556530-9720'
+AND insuranceState = 'PAID_UP_POLICY_STATE'
+OR policyHolderNumber = '16556329-9519'
+AND insuranceState = 'PAID_UP_POLICY_STATE'
+OR policyHolderNumber = '16556017-2222'
+AND insuranceState = 'PAID_UP_POLICY_STATE'
+OR policyHolderNumber = '16769605-2856'
+AND insuranceState = 'PAID_UP_POLICY_STATE'
+OR policyHolderNumber = '16556118-3954'
+AND insuranceState = 'PAID_UP_POLICY_STATE'
+OR policyHolderNumber = '16556017-8443'
+AND insuranceState = 'PAID_UP_POLICY_STATE'
+OR policyHolderNumber = '16556664-8118'
+AND insuranceState = 'PAID_UP_POLICY_STATE'
+OR policyHolderNumber = '16556156-4039'
+AND insuranceState = 'PAID_UP_POLICY_STATE'
+OR policyHolderNumber = '16556005-7639'
+AND insuranceState = 'PAID_UP_POLICY_STATE'
+OR policyHolderNumber = '16556000-1538'
+AND insuranceState = 'PAID_UP_POLICY_STATE'
+OR policyHolderNumber = '16556186-7796'
+AND insuranceState = 'PAID_UP_POLICY_STATE'
+OR policyHolderNumber = '16556559-4503'
+AND insuranceState = 'PAID_UP_POLICY_STATE'
+OR policyHolderNumber = '16556575-1137'
+AND insuranceState = 'PAID_UP_POLICY_STATE' 
+and (exists (select 1 from linda.Component c, linda.SavingsPolicy sp where c.xBenefit = b.xid and sp.xid = c.xSavingsPolicy) or
+     exists (select 1 from linda.SavingsPolicy sp where sp.xid = b.xSavingsPolicy))) benefit
+
+----- TBQ -----
+
+select * from pml.Anstallda a where a.Personnummer_2 = '196606199310';
+
+select * from linda.SavingsPolicy sp where sp.xid = '1f022cac-8cc0-4bdd-b21c-d222854819cb';
+
+select * from linda.SecurityShare ss where ss.xSavingsPolicy = '1f022cac-8cc0-4bdd-b21c-d222854819cb';
+
+SELECT COUNT(policyHolderNumber) AS Nbr
+  FROM [Datawarehouse].[linda].[Benefit]
+  WHERE policyHolderNumber = '16556229-5666'
+  OR policyHolderNumber = '16556028-0611'
+  OR policyHolderNumber = '16556530-9720'
+  OR policyHolderNumber = '16556329-9519'
+  OR policyHolderNumber = '16556017-2222'
+  OR policyHolderNumber = '16769605-2856'
+  OR policyHolderNumber = '16556118-3954'
+  OR policyHolderNumber = '16556017-8443'
+  OR policyHolderNumber = '16556664-8118'
+  OR policyHolderNumber = '16556156-4039'
+  OR policyHolderNumber = '16556005-7639'
+  OR policyHolderNumber = '16556000-1538'
+  OR policyHolderNumber = '16556186-7796'
+  OR policyHolderNumber = '16556559-4503'
+  OR policyHolderNumber = '16556575-1137'
