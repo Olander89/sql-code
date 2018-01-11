@@ -1,0 +1,32 @@
+  SELECT
+  r.Namn			AS 'Rådgivare',
+  r.Team			AS 'Team',
+  k.Namn			AS 'Kund',
+  k.Pnr				AS 'Pnr',
+  k.Adress			AS 'Adress',
+  k.Postnr			AS 'Postnr',
+  k.Ort				AS 'Ort',
+  k.Hemtelefon		AS 'Hemtelefon',
+  k.Arbetstelefon	AS 'Arbetstelefon',
+  k.Mobiltelefon	AS 'Mobiltelefon',
+  k.Epostadress		AS 'Epostadress',
+  kf.Orgnr			AS 'Orgnr',
+  kf.Namn			AS 'Företag',
+  kf.Koncern		AS 'Koncern'
+  FROM (
+  ( SELECT
+  k.RadgivarID, k.KundforetagID,
+  k.Pnr, k.Namn, k.Postnr, k.Hemtelefon,
+  k.Arbetstelefon, k.Mobiltelefon, k.Epostadress,
+  UPPER(LEFT(Ort,1))+LOWER(SUBSTRING(Ort,2,LEN(Ort))) AS Ort,
+  UPPER(LEFT(Adress,1))+LOWER(SUBSTRING(Adress,2,LEN(Adress))) AS Adress
+  FROM dw.Kund k
+  WHERE PlaceringsradgivarID = '-32068234' ) k
+  JOIN
+  ( SELECT r.RadgivarID, r.Namn, r.TeamID, r.Team
+  FROM dw.Radgivare r) r
+  ON k.RadgivarID = r.RadgivarID 
+  JOIN
+  ( SELECT kf.KundforetagID, kf.Orgnr, kf.Namn, kf.Koncern
+  FROM dw.Kundforetag kf) kf
+  ON k.KundforetagID = kf.KundforetagID )
