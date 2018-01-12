@@ -1,3 +1,5 @@
+-- Magnus Lundahl ID "-32068234", Gustav Petersén ID "-28709114"
+  -- Övriga Spartillgångar från faktainsamling
   SELECT
   r.Namn			AS 'Rådgivare',
   r.Team			AS 'Team',
@@ -29,4 +31,7 @@
   JOIN
   ( SELECT kf.KundforetagID, kf.Orgnr, kf.Namn, kf.Koncern
   FROM dw.Kundforetag kf) kf
-  ON k.KundforetagID = kf.KundforetagID )
+ON k.KundforetagID = kf.KundforetagID )
+
+SELECT * FROM dw.kund WHERE PlaceringsradgivarID = '-32068234'
+SELECT * FROM dw.Radgivare WHERE Namn = 'Gustav Petersén'
