@@ -14,7 +14,10 @@
   k.Epostadress		AS 'Epostadress',
   kf.Orgnr			AS 'Orgnr',
   kf.Namn			AS 'Företag',
-  kf.Koncern		AS 'Koncern'
+  kf.Koncern		AS 'Koncern',
+  fi.type			AS 'TillgångsTyp',
+  fi.name			AS 'Sparnamn',
+  fi.value			AS 'Värde'
   FROM (
   ( SELECT
   k.RadgivarID, k.KundforetagID,
@@ -31,7 +34,13 @@
   JOIN
   ( SELECT kf.KundforetagID, kf.Orgnr, kf.Namn, kf.Koncern
   FROM dw.Kundforetag kf) kf
-ON k.KundforetagID = kf.KundforetagID )
+  ON k.KundforetagID = kf.KundforetagID )
+  JOIN
+  (SELECT fi.ssn, fi.type, fi.name, fid.value
+  FROM [Datawarehouse].[linda].[IGFinancialItemData] fid
+  JOIN [Datawarehouse].[linda].[IGFinancialItem] fi ON fid.xFinancialItem = fi.xID
+  WHERE fid.dataType = 'MARKET_VALUE') fi
+  ON k.Pnr = fi.ssn
 
 SELECT * FROM dw.kund WHERE PlaceringsradgivarID = '-32068234'
 SELECT * FROM dw.Radgivare WHERE Namn = 'Gustav Petersén'
