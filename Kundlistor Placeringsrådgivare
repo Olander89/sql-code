@@ -1,25 +1,25 @@
 -- Magnus Lundahl ID "-32068234", Gustav Petersén ID "-28709114"
   -- Övriga Spartillgångar från faktainsamling
   SELECT
-  r.Namn					        AS 'Rådgivare',
-  k.RadgivarID				    AS 'RådgivarID',
+  r.Namn					AS 'Rådgivare',
+  k.RadgivarID				AS 'RådgivarID',
   k.PlaceringsradgivarID	AS 'PlaceringsradgivarID',
-  r.Team					        AS 'Team',
-  k.Namn					        AS 'Kund',
-  k.Pnr						        AS 'Pnr',
-  k.Adress					      AS 'Adress',
-  k.Postnr					      AS 'Postnr',
-  k.Ort						        AS 'Ort',
-  k.Hemtelefon				    AS 'Hemtelefon',
-  k.Arbetstelefon			    AS 'Arbetstelefon',
-  k.Mobiltelefon			    AS 'Mobiltelefon',
-  k.Epostadress				    AS 'Epostadress',
-  kf.Orgnr					      AS 'Orgnr',
-  kf.Namn					        AS 'Företag',
-  kf.Koncern				      AS 'Koncern',
-  fi.type					        AS 'TillgångsTyp',
-  fi.name					        AS 'Sparnamn',
-  fi.value					      AS 'Värde'
+  r.Team					AS 'Team',
+  k.Namn					AS 'Kund',
+  k.Pnr						AS 'Pnr',
+  k.Adress					AS 'Adress',
+  k.Postnr					AS 'Postnr',
+  k.Ort						AS 'Ort',
+  k.Hemtelefon				AS 'Hemtelefon',
+  k.Arbetstelefon			AS 'Arbetstelefon',
+  k.Mobiltelefon			AS 'Mobiltelefon',
+  k.Epostadress				AS 'Epostadress',
+  kf.Orgnr					AS 'Orgnr',
+  kf.Namn					AS 'Företag',
+  kf.Koncern				AS 'Koncern',
+  fi.type					AS 'TillgångsTyp',
+  fi.name					AS 'Sparnamn',
+  fi.value					AS 'Värde'
   FROM (
   ( SELECT
   k.RadgivarID, k.KundforetagID, k.PlaceringsradgivarID,
