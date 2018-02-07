@@ -1,0 +1,15 @@
+SELECT k.Pnr, k.Namn, k.Adress, k.Postnr, k.Ort, k.Hemtelefon, k.Arbetstelefon, k.Mobiltelefon, k.Epostadress, k.Alder
+FROM dw.Kund k
+WHERE Ort = 'Malmö'
+OR Ort = 'Arlöv'
+OR Ort = 'Bunkeflostrand'
+OR Ort = 'Klagshamn'
+OR Ort = 'Limhamn'
+OR Ort = 'Oxie'
+OR Ort = 'Tygelsjö'
+OR Ort = 'Vellinge'
+OR Ort = 'Vintrie'
+OR Ort = 'Lund'
+OR Ort = 'Svedala'
+OR Ort = 'Staffanstorp'
+OR Ort = 'Burlöv'
