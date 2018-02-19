@@ -1,0 +1,15 @@
+-- PEP
+
+SELECT *
+  FROM [Datawarehouse].[stage].[pml_PersonParameter]
+  WHERE value = '1'
+  and xParameterType = '26'
+  
+-- Eller
+
+SELECT *
+  FROM [Datawarehouse].[dw].[Kund]
+  WHERE pep = 'j'
+  
+-- Högrisk
+
