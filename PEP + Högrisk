@@ -17,3 +17,22 @@ SELECT *
   FROM [Datawarehouse].[stage].[pml_PersonParameter]
   WHERE value = '1'
   and xParameterType = '27'
+  
+  
+  
+--Högrisk
+SELECT k.Pnr, k.Fornamn, k.Efternamn, k.Adress, k.Postnr, k.Ort
+  FROM dw.Kund k
+  WHERE EXISTS (SELECT xPerson
+  FROM [stage].[pml_PersonParameter]
+  WHERE xPerson = k.KundID
+  AND xParameterType = '27'
+  AND value = '1')
+--PEP
+  SELECT k.Pnr, k.Fornamn, k.Efternamn, k.Adress, k.Postnr, k.Ort
+  FROM dw.Kund k
+  WHERE EXISTS (SELECT xPerson
+  FROM [stage].[pml_PersonParameter]
+  WHERE xPerson = k.KundID
+  AND xParameterType = '26'
+  AND value = '1')
