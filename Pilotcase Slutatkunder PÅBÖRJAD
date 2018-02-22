@@ -1,6 +1,10 @@
-SELECT k.Pnr, k.Namn, k.Adress, k.Postnr, k.Ort, k.Hemtelefon, k.Arbetstelefon, k.Mobiltelefon, k.Epostadress, k.Alder
+SELECT k.KundID, k.Pnr, k.Namn, k.Adress, k.Postnr, k.Ort, k.Hemtelefon, k.Arbetstelefon, k.Mobiltelefon, k.Epostadress, k.Alder
 FROM dw.Kund k
-WHERE Ort = 'Malmö'
+-- Utan Maxfonder
+WHERE NOT EXISTS (SELECT 1 FROM dw.MaxfonderKund mk WHERE mk.KundNr = k.Pnr)
+-- Utan Kundmöte sedan 2016-01-01
+AND NOT EXISTS (SELECT 1 FROM dw.KundMote km WHERE km.KundID = k.KundID AND km.SenasteMote > DateAdd(yy, -2, GetDate()))
+AND Ort = 'Malmö'
 OR Ort = 'Arlöv'
 OR Ort = 'Bunkeflostrand'
 OR Ort = 'Klagshamn'
@@ -13,3 +17,9 @@ OR Ort = 'Lund'
 OR Ort = 'Svedala'
 OR Ort = 'Staffanstorp'
 OR Ort = 'Burlöv'
+
+SELECT km.KundID, km.SenasteMote, km.NastaMote
+FROM dw.KundMote km
+JOIN dw.Kund k ON km.KundiD = k.KundID
+WHERE SenasteMote > DateAdd(yy, -2, GetDate())
+ORDER BY SenasteMote DESC
