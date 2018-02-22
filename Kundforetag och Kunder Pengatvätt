@@ -14,3 +14,34 @@ and kf.Orgnr != '5560266883'
 -- Vi bör ha fått någon form av ersättning från företaget
 and (exists (select 1 from dw.Prov_Provision p where p.Period  between '2017-01' and '2017-12' and p.ForsakringstagareOrgnr = kf.Orgnr) or
     exists (select 1 from dw.Arvode ar        where ar.Period between '2017-01' and '2017-12' and ar.Orgnr = kf.Orgnr));
+    
+SELECT alpha.Orgnr, beta.Belopp FROM
+(
+	SELECT DISTINCT kf.Orgnr
+	FROM dw.Kundforetag kf
+	WHERE kf.Aktiv = 'j'
+	-- Plocka bort IBM, som inte längre är vår kund
+	and kf.Orgnr != '5560266883'
+	-- Vi bör ha fått någon form av ersättning från företaget
+	AND (EXISTS (SELECT 1 FROM dw.Prov_Provision p WHERE p.Period  between '2017-01' and '2017-12' and p.ForsakringstagareOrgnr = kf.Orgnr) OR
+	EXISTS (SELECT 1 FROM dw.Arvode ar WHERE ar.Period between '2017-01' and '2017-12' and ar.Orgnr = kf.Orgnr))) alpha
+LEFT JOIN
+	(SELECT Orgnr, SUM(Belopp) AS Belopp FROM
+	  (
+		SELECT ForsakringstagareOrgnr AS Orgnr, SUM(ProvisionBrutto) AS Belopp
+		FROM dw.Prov_Provision
+		WHERE Period >= '2017-01'
+		AND Period <= '2017-12'
+		AND Produktgrupp != 'Sakförsäkring'
+		GROUP BY ForsakringstagareOrgnr
+	UNION ALL
+		SELECT Orgnr, SUM(Belopp) AS Belopp
+		FROM dw.Arvode
+		WHERE Period >= '2017-01'
+		AND Period <= '2017-12'
+		GROUP BY Orgnr
+	  ) totals
+		WHERE Belopp > 0
+		GROUP BY Orgnr) beta
+ON alpha.Orgnr = beta.Orgnr
+ORDER BY beta.Belopp DESC
