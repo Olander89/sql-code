@@ -1,0 +1,5 @@
+SELECT Foretag, financialExperience, COUNT(financialExperience) AS nbr
+FROM Anstallda
+WHERE xFORETA = -13708628
+GROUP BY Foretag, financialExperience
+ORDER BY nbr ASC
