@@ -1,0 +1,77 @@
+CREATE TABLE Temp1#
+(
+ id numeric(18),
+ status varchar(10),
+ brokerSSN varchar(13),
+ customerSSN varchar(13),
+ counselingDate date,
+ createdDate datetime2(7)
+)
+
+INSERT INTO Temp1# (id,status,brokerSSN,customerSSN,counselingDate,createdDate)
+SELECT id,status,brokerSSN,customerSSN,counselingDate,createdDate
+  FROM [Datawarehouse].[stage].[linda_CounselingSessionData] a
+  WHERE brokerSSN = '19630406-6217'
+  AND counselingDate > '2017-01-01'
+
+
+  SELECT *
+  FROM [Datawarehouse].[dw].[DokumenteratMote]
+  WHERE RadgivarID = '-31352888'
+  AND Datum > '2017-01-01'
+
+SELECT *
+FROM Temp1# 
+ORDER BY counselingDate ASC
+
+CREATE TABLE Temp2#
+(
+id numeric(18),
+status varchar(10),
+ssn varchar(13),
+createdDate datetime2(7),
+lastUpdated datetime2(7)
+)
+
+INSERT INTO Temp2# (id,status,ssn,createdDate,lastUpdated)
+SELECT xID,status,ssn,createdDate,lastUpdated
+FROM LINDA_PROD.Linda.dbo.dw_vy_CounselingSessionData_raw
+WHERE ssn = '19471012-9133'
+OR ssn = '19480728-6416'
+OR ssn = '19481228-6377'
+OR ssn = '19490929-6271'
+OR ssn = '19500919-6261'
+OR ssn = '19511201-5937'
+OR ssn = '19520526-6371'
+OR ssn = '19521206-6277'
+OR ssn = '19530915-3376'
+OR ssn = '19531130-6293'
+OR ssn = '19540414-3124'
+OR ssn = '19540708-6221'
+OR ssn = '19550810-6241'
+OR ssn = '19561103-6244'
+OR ssn = '19570613-6248'
+OR ssn = '19580524-6211'
+OR ssn = '19590409-7820'
+OR ssn = '19591102-6259'
+OR ssn = '19600423-6375'
+OR ssn = '19610421-6418'
+OR ssn = '19611203-6261'
+OR ssn = '19630115-6227'
+OR ssn = '19641024-9368'
+OR ssn = '19650510-6200'
+OR ssn = '19660210-7192'
+OR ssn = '19680220-6216'
+OR ssn = '19681217-6250'
+OR ssn = '19690602-6213'
+OR ssn = '19730811-6255'
+OR ssn = '19751229-6216'
+OR ssn = '19781217-6274'
+OR ssn = '19790924-6212'
+OR ssn = '19841211-1018'
+AND lastUpdated > '2017-01-01'
+
+SELECT a.id,a.status,a.brokerSSN,a.customerSSN,a.counselingDate,b.createdDate,b.lastUpdated
+FROM Temp1# a
+JOIN Temp2# b On a.id = b.id
+ORDER BY counselingDate ASC
