@@ -51,3 +51,33 @@ JOIN sox.kapital kap ON k.KundID = kap.KundID
 		OR Ort = 'Staffanstorp'		AND kap.Navigera IS NULL
 		OR Ort = 'Burlöv'			AND kap.Navigera IS NULL
 	ORDER BY Kapital DESC
+	
+	
+	
+	
+  SELECT
+	km.SenasteMote,
+	k.Pnr, k.Namn, k.Adress,k.Postnr,
+	k.Ort, k.Hemtelefon, k.Arbetstelefon,k.Mobiltelefon,
+	k.Epostadress, k.Alder, kap.Kapital, kap.Trad, kap.Fond,
+	kap.AktivFond, kap.Indexfond, kap.Rantefond
+  FROM dw.Radgivare r
+  LEFT JOIN dw.Kund k ON r.RadgivarID = k.RadgivarID
+  LEFT JOIN dw.KundMote km ON k.KundID = km.KundID
+  JOIN sox.kapital kap ON k.KundID = kap.KundID
+  AND Roll = 'Slutat'
+  WHERE NOT EXISTS (SELECT 1 FROM dw.MaxfonderKund mk WHERE mk.KundNr = k.Pnr)
+  		AND Ort = 'Malmö'			AND kap.Navigera IS NULL	  AND Roll = 'Slutat'		
+		OR Ort = 'Arlöv'			AND kap.Navigera IS NULL	  AND Roll = 'Slutat'		
+		OR Ort = 'Bunkeflostrand'	AND kap.Navigera IS NULL	  AND Roll = 'Slutat'		
+		OR Ort = 'Klagshamn'		AND kap.Navigera IS NULL	  AND Roll = 'Slutat'		
+		OR Ort = 'Limhamn'			AND kap.Navigera IS NULL	  AND Roll = 'Slutat'		
+		OR Ort = 'Oxie'				AND kap.Navigera IS NULL	  AND Roll = 'Slutat'		
+		OR Ort = 'Tygelsjö'			AND kap.Navigera IS NULL	  AND Roll = 'Slutat'		
+		OR Ort = 'Vellinge'			AND kap.Navigera IS NULL	  AND Roll = 'Slutat'		
+		OR Ort = 'Vintrie'			AND kap.Navigera IS NULL	  AND Roll = 'Slutat'		
+		OR Ort = 'Lund'				AND kap.Navigera IS NULL	  AND Roll = 'Slutat'		
+		OR Ort = 'Svedala'			AND kap.Navigera IS NULL	  AND Roll = 'Slutat'		
+		OR Ort = 'Staffanstorp'		AND kap.Navigera IS NULL	  AND Roll = 'Slutat'		
+		OR Ort = 'Burlöv'			AND kap.Navigera IS NULL	  AND Roll = 'Slutat'		
+	ORDER BY Kapital DESC
