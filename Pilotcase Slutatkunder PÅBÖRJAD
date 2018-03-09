@@ -23,3 +23,31 @@ FROM dw.KundMote km
 JOIN dw.Kund k ON km.KundiD = k.KundID
 WHERE SenasteMote > DateAdd(yy, -2, GetDate())
 ORDER BY SenasteMote DESC
+
+
+
+SELECT
+	k.KundID, k.Pnr, k.Namn, k.Adress,k.Postnr,
+	k.Ort, k.Hemtelefon, k.Arbetstelefon,k.Mobiltelefon,
+	k.Epostadress, k.Alder, kap.Kapital,kap.Trad, kap.Fond,
+	kap.AktivFond, kap.Indexfond, kap.Rantefond
+FROM dw.Kund k
+JOIN sox.kapital kap ON k.KundID = kap.KundID
+	-- Utan Maxfonder
+	WHERE NOT EXISTS (SELECT 1 FROM dw.MaxfonderKund mk WHERE mk.KundNr = k.Pnr)
+	-- Utan Kundmöte sedan 2 år bakåt
+	AND NOT EXISTS (SELECT 1 FROM dw.KundMote km WHERE km.KundID = k.KundID AND km.SenasteMote > DateAdd(yy, -2, GetDate()))
+		AND Ort = 'Malmö'			AND kap.Navigera IS NULL
+		OR Ort = 'Arlöv'			AND kap.Navigera IS NULL
+		OR Ort = 'Bunkeflostrand'	AND kap.Navigera IS NULL
+		OR Ort = 'Klagshamn'		AND kap.Navigera IS NULL
+		OR Ort = 'Limhamn'			AND kap.Navigera IS NULL
+		OR Ort = 'Oxie'				AND kap.Navigera IS NULL
+		OR Ort = 'Tygelsjö'			AND kap.Navigera IS NULL
+		OR Ort = 'Vellinge'			AND kap.Navigera IS NULL
+		OR Ort = 'Vintrie'			AND kap.Navigera IS NULL
+		OR Ort = 'Lund'				AND kap.Navigera IS NULL
+		OR Ort = 'Svedala'			AND kap.Navigera IS NULL
+		OR Ort = 'Staffanstorp'		AND kap.Navigera IS NULL
+		OR Ort = 'Burlöv'			AND kap.Navigera IS NULL
+	ORDER BY Kapital DESC
