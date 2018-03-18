@@ -189,3 +189,115 @@ OR countryCode = "AT"') a
 JOIN #Temp t ON a.Personnummer_2 = t.Pnr
 
 DROP TABLE #Temp
+
+--c6 mmab
+CREATE TABLE #Temp
+(
+Pnr CHAR(12)
+)
+
+INSERT INTO #Temp (Pnr)
+
+--Kunder mmab
+SELECT DISTINCT k.Pnr AS Pnr
+FROM dw.Kund k
+WHERE k.Aktiv = 'j'
+--Där ForsakringstagareOrgnr motsvarar Pnr och vi har provision
+AND (EXISTS (SELECT 1 FROM dw.Prov_Provision p WHERE p.Period  BETWEEN '2017-01' AND '2017-12' AND p.ForsakringstagareOrgnr = k.Pnr AND BolagID = '1')
+--Eller där kunder har Maxfonder
+OR EXISTS (SELECT 1 FROM dw.MaxfonderKund mk WHERE mk.KundNr = k.Pnr))
+
+-- Hämta Personnummer med countryCode utanför EU/EES och JOINA med "aktiva kunder" i #Temp
+SELECT * FROM OPENQUERY
+(PML_PROD, 'SELECT DISTINCT Personnummer_2, countryCode
+FROM pml.dbo.anstallda WHERE countryCode != "SE"
+AND countryCode != "BE"
+AND countryCode != "BG"
+AND countryCode != "CY"
+AND countryCode != "DK"
+AND countryCode != "EE"
+AND countryCode != "FI"
+AND countryCode != "FR"
+AND countryCode != "GR"
+AND countryCode != "IE"
+AND countryCode != "IS"
+AND countryCode != "IT"
+AND countryCode != "HR"
+AND countryCode != "LV"
+AND countryCode != "LI"
+AND countryCode != "LT"
+AND countryCode != "LU"
+AND countryCode != "MT"
+AND countryCode != "NL"
+AND countryCode != "NO"
+AND countryCode != "PL"
+AND countryCode != "PT"
+AND countryCode != "RO"
+AND countryCode != "SK"
+AND countryCode != "SI"
+AND countryCode != "ES"
+AND countryCode != "GB"
+AND countryCode != "CZ"
+AND countryCode != "DE"
+AND countryCode != "HU"
+AND countryCode != "AT"') a
+JOIN #Temp t ON a.Personnummer_2 = t.Pnr
+ORDER BY countryCode DESC
+
+DROP TABLE #Temp
+
+--c6 mmvp
+CREATE TABLE #Temp
+(
+Pnr CHAR(12)
+)
+
+INSERT INTO #Temp (Pnr)
+
+--Kunder mmvp
+SELECT DISTINCT k.Pnr AS Pnr
+FROM dw.Kund k
+WHERE k.Aktiv = 'j'
+--Där ForsakringstagareOrgnr motsvarar Pnr och vi har provision
+AND (EXISTS (SELECT 1 FROM dw.Prov_Provision p WHERE p.Period  BETWEEN '2017-01' AND '2017-12' AND p.ForsakringstagareOrgnr = k.Pnr AND BolagID = '2')
+--Eller där kunder har Maxfonder
+OR EXISTS (SELECT 1 FROM dw.MaxfonderKund mk WHERE mk.KundNr = k.Pnr))
+
+-- Hämta Personnummer med countryCode utanför EU/EES och JOINA med "aktiva kunder" i #Temp
+SELECT * FROM OPENQUERY
+(PML_PROD, 'SELECT DISTINCT Personnummer_2, countryCode
+FROM pml.dbo.anstallda WHERE countryCode != "SE"
+AND countryCode != "BE"
+AND countryCode != "BG"
+AND countryCode != "CY"
+AND countryCode != "DK"
+AND countryCode != "EE"
+AND countryCode != "FI"
+AND countryCode != "FR"
+AND countryCode != "GR"
+AND countryCode != "IE"
+AND countryCode != "IS"
+AND countryCode != "IT"
+AND countryCode != "HR"
+AND countryCode != "LV"
+AND countryCode != "LI"
+AND countryCode != "LT"
+AND countryCode != "LU"
+AND countryCode != "MT"
+AND countryCode != "NL"
+AND countryCode != "NO"
+AND countryCode != "PL"
+AND countryCode != "PT"
+AND countryCode != "RO"
+AND countryCode != "SK"
+AND countryCode != "SI"
+AND countryCode != "ES"
+AND countryCode != "GB"
+AND countryCode != "CZ"
+AND countryCode != "DE"
+AND countryCode != "HU"
+AND countryCode != "AT"') a
+JOIN #Temp t ON a.Personnummer_2 = t.Pnr
+ORDER BY countryCode DESC
+
+DROP TABLE #Temp
