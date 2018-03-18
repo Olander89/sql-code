@@ -1,0 +1,37 @@
+--Kunder mmab
+SELECT DISTINCT k.Pnr
+FROM dw.Kund k
+WHERE k.Aktiv = 'j'
+--Där ForsakringstagareOrgnr motsvarar Pnr och vi har provision
+AND (EXISTS (SELECT 1 FROM dw.Prov_Provision p WHERE p.Period  BETWEEN '2017-01' AND '2017-12' AND p.ForsakringstagareOrgnr = k.Pnr AND BolagID = '1')
+--Eller där kunder har Maxfonder
+OR EXISTS (SELECT 1 FROM dw.MaxfonderKund mk WHERE  mk.KundNr = k.Pnr))
+
+--Kundföretag mmab
+SELECT DISTINCT kf.Orgnr
+FROM dw.Kundforetag kf
+WHERE kf.Aktiv = 'j'
+-- Plocka bort IBM, som inte längre är vår kund
+AND kf.Orgnr != '5560266883'
+-- Vi bör ha fått någon form av ersättning från företaget
+AND (EXISTS (select 1 from dw.Prov_Provision p where p.Period  BETWEEN '2017-01' AND '2017-12' AND p.ForsakringstagareOrgnr = kf.Orgnr AND BolagID = '1')
+OR EXISTS (select 1 from dw.Arvode ar where ar.Period BETWEEN '2017-01' and '2017-12' AND ar.Orgnr = kf.Orgnr));
+
+--Kunder mmvp
+SELECT DISTINCT k.Pnr
+FROM dw.Kund k
+WHERE k.Aktiv = 'j'
+--Där ForsakringstagareOrgnr motsvarar Pnr och vi har provision
+AND (EXISTS (SELECT 1 FROM dw.Prov_Provision p WHERE p.Period  BETWEEN '2017-01' AND '2017-12' AND p.ForsakringstagareOrgnr = k.Pnr AND BolagID = '2')
+--Eller där kunder har Maxfonder
+OR EXISTS (SELECT 1 FROM dw.MaxfonderKund mk WHERE  mk.KundNr = k.Pnr))
+
+--Kundföretag mmvp
+SELECT DISTINCT kf.Orgnr
+FROM dw.Kundforetag kf
+WHERE kf.Aktiv = 'j'
+-- Plocka bort IBM, som inte längre är vår kund
+AND kf.Orgnr != '5560266883'
+-- Vi bör ha fått någon form av ersättning från företaget
+AND (EXISTS (select 1 from dw.Prov_Provision p where p.Period  BETWEEN '2017-01' AND '2017-12' AND p.ForsakringstagareOrgnr = kf.Orgnr AND BolagID = '2')
+OR EXISTS (select 1 from dw.Arvode ar where ar.Period BETWEEN '2017-01' and '2017-12' AND ar.Orgnr = kf.Orgnr));
