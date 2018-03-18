@@ -1,4 +1,4 @@
---Kunder mmab
+--Kunder mmab c1
 SELECT DISTINCT k.Pnr
 FROM dw.Kund k
 WHERE k.Aktiv = 'j'
@@ -7,7 +7,7 @@ AND (EXISTS (SELECT 1 FROM dw.Prov_Provision p WHERE p.Period  BETWEEN '2017-01'
 --Eller där kunder har Maxfonder
 OR EXISTS (SELECT 1 FROM dw.MaxfonderKund mk WHERE  mk.KundNr = k.Pnr))
 
---Kundföretag mmab
+--Kundföretag mmab c1
 SELECT DISTINCT kf.Orgnr
 FROM dw.Kundforetag kf
 WHERE kf.Aktiv = 'j'
@@ -17,7 +17,7 @@ AND kf.Orgnr != '5560266883'
 AND (EXISTS (select 1 from dw.Prov_Provision p where p.Period  BETWEEN '2017-01' AND '2017-12' AND p.ForsakringstagareOrgnr = kf.Orgnr AND BolagID = '1')
 OR EXISTS (select 1 from dw.Arvode ar where ar.Period BETWEEN '2017-01' and '2017-12' AND ar.Orgnr = kf.Orgnr));
 
---Kunder mmvp
+--Kunder mmvp c1
 SELECT DISTINCT k.Pnr
 FROM dw.Kund k
 WHERE k.Aktiv = 'j'
@@ -26,7 +26,7 @@ AND (EXISTS (SELECT 1 FROM dw.Prov_Provision p WHERE p.Period  BETWEEN '2017-01'
 --Eller där kunder har Maxfonder
 OR EXISTS (SELECT 1 FROM dw.MaxfonderKund mk WHERE  mk.KundNr = k.Pnr))
 
---Kundföretag mmvp
+--Kundföretag mmvp c1
 SELECT DISTINCT kf.Orgnr
 FROM dw.Kundforetag kf
 WHERE kf.Aktiv = 'j'
@@ -35,3 +35,49 @@ AND kf.Orgnr != '5560266883'
 -- Vi bör ha fått någon form av ersättning från företaget
 AND (EXISTS (select 1 from dw.Prov_Provision p where p.Period  BETWEEN '2017-01' AND '2017-12' AND p.ForsakringstagareOrgnr = kf.Orgnr AND BolagID = '2')
 OR EXISTS (select 1 from dw.Arvode ar where ar.Period BETWEEN '2017-01' and '2017-12' AND ar.Orgnr = kf.Orgnr));
+
+--c2 mmab
+CREATE TABLE #Temp
+(
+Pnr CHAR(12)
+)
+
+INSERT INTO #Temp (Pnr)
+
+--Kunder mmab
+SELECT DISTINCT k.Pnr AS Pnr
+FROM dw.Kund k
+WHERE k.Aktiv = 'j'
+--Där ForsakringstagareOrgnr motsvarar Pnr och vi har provision
+AND (EXISTS (SELECT 1 FROM dw.Prov_Provision p WHERE p.Period  BETWEEN '2017-01' AND '2017-12' AND p.ForsakringstagareOrgnr = k.Pnr AND BolagID = '1')
+--Eller där kunder har Maxfonder
+OR EXISTS (SELECT 1 FROM dw.MaxfonderKund mk WHERE mk.KundNr = k.Pnr))
+
+-- Hämta Personnummer med countryCode 'SE' och JOINA med "aktiva kunder" i #Temp
+SELECT * FROM OPENQUERY(PML_PROD, 'SELECT DISTINCT Personnummer_2, countryCode FROM pml.dbo.anstallda WHERE countryCode = "SE"') a
+JOIN #Temp t ON a.Personnummer_2 = t.Pnr
+
+DROP TABLE #Temp
+
+--c2 mmvp
+CREATE TABLE #Temp
+(
+Pnr CHAR(12)
+)
+
+INSERT INTO #Temp (Pnr)
+
+--Kunder mmvp
+SELECT DISTINCT k.Pnr AS Pnr
+FROM dw.Kund k
+WHERE k.Aktiv = 'j'
+--Där ForsakringstagareOrgnr motsvarar Pnr och vi har provision
+AND (EXISTS (SELECT 1 FROM dw.Prov_Provision p WHERE p.Period  BETWEEN '2017-01' AND '2017-12' AND p.ForsakringstagareOrgnr = k.Pnr AND BolagID = '2')
+--Eller där kunder har Maxfonder
+OR EXISTS (SELECT 1 FROM dw.MaxfonderKund mk WHERE mk.KundNr = k.Pnr))
+
+-- Hämta Personnummer med countryCode 'SE' och JOINA med "aktiva kunder" i #Temp
+SELECT * FROM OPENQUERY(PML_PROD, 'SELECT DISTINCT Personnummer_2, countryCode FROM pml.dbo.anstallda WHERE countryCode = "SE"') a
+JOIN #Temp t ON a.Personnummer_2 = t.Pnr
+
+DROP TABLE #Temp
