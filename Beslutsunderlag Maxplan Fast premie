@@ -1,0 +1,59 @@
+--*** Med AntalForsakrade av AntalAnstallda, samt TotalPremie ***
+
+SELECT Team, Radgivare, adm.Namn AS Administrator, maxPl.Orgnr, Foretagsnamn, Koncern, Affarstyp, AntalAnstallda, GallandeForsakringar, TotalPremie
+FROM(
+(SELECT kf.RadgivarID, f.KundforetagID, f.Orgnr, f.Koncern, kf.Namn as Foretagsnamn, f.Affarstyp, kf.AdministratorID
+  FROM [Datawarehouse].[sox].[forsakring] f
+  JOIN [Datawarehouse].[dw].[Kundforetag] kf
+  ON f.KundforetagID = kf.KundforetagID
+  WHERE f.Affarstyp = 'Maxplan') maxPl
+JOIN
+(SELECT r.Team, r.Namn AS Radgivare, r.RadgivarID
+  FROM [Datawarehouse].[dw].[Radgivare] r) rad
+  ON maxPl.RadgivarID = rad.RadgivarID
+LEFT JOIN
+(SELECT a.AdministratorID, a.Namn
+  FROM [Datawarehouse].[dw].[Administrator] a) adm
+  ON maxPl.AdministratorID = adm.AdministratorID
+JOIN
+(SELECT k.Orgnr AS kOrgnr, k.AntalAnstallda
+  FROM [Datawarehouse].[sox].[koncern] k) koncern
+  ON  maxPl.Orgnr = koncern.kOrgnr)
+JOIN
+(SELECT KundforetagID, COUNT(forsakring.KundID) AS GallandeForsakringar, SUM(forsakring.Premie) AS TotalPremie FROM
+  (SELECT DISTINCT f.KundID, SUM(f.Premie) AS Premie
+  FROM [Datawarehouse].[dw].[Forsakring] f
+  WHERE "Status" = 'Gällande'
+  GROUP BY f.KundID) forsakring
+  JOIN
+  (SELECT k.KundforetagID, k.KundID
+  FROM [Datawarehouse].[dw].[Kund] k) kund
+  ON forsakring.KundID = kund.KundID
+  GROUP BY KundforetagID) forsakrade
+  ON maxPl.KundforetagID = forsakrade.KundforetagID
+GROUP BY Team, Radgivare, adm.Namn, maxPl.Orgnr, Foretagsnamn, Koncern, Affarstyp, AntalAnstallda, GallandeForsakringar, TotalPremie
+ORDER BY Foretagsnamn ASC
+
+==================================================================================
+
+SELECT Team, Radgivare, adm.Namn AS Administrator, Orgnr, Foretagsnamn, Koncern, Affarstyp, AntalAnstallda
+FROM(
+(SELECT kf.RadgivarID, f.KundforetagID, f.Orgnr, f.Koncern, kf.Namn as Foretagsnamn, f.Affarstyp, kf.AdministratorID
+  FROM [Datawarehouse].[sox].[forsakring] f
+  JOIN [Datawarehouse].[dw].[Kundforetag] kf
+  ON f.KundforetagID = kf.KundforetagID
+  WHERE f.Affarstyp = 'Maxplan') mPlan
+JOIN
+(SELECT r.Team, r.Namn AS Radgivare, r.RadgivarID
+  FROM [Datawarehouse].[dw].[Radgivare] r) rad
+  ON mPlan.RadgivarID = rad.RadgivarID
+LEFT JOIN
+(SELECT a.AdministratorID, a.Namn
+  FROM [Datawarehouse].[dw].[Administrator] a) adm
+  ON mPlan.AdministratorID = adm.AdministratorID
+JOIN
+(SELECT k.Orgnr AS kOrgnr, k.AntalAnstallda
+  FROM [Datawarehouse].[sox].[koncern] k) koncern
+  ON  mPlan.Orgnr = koncern.kOrgnr)
+GROUP BY Team, Radgivare, adm.Namn, Orgnr, Foretagsnamn, Koncern, Affarstyp, AntalAnstallda
+ORDER BY Foretagsnamn ASC
