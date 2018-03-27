@@ -1,0 +1,23 @@
+--Högrisk
+SELECT DISTINCT Pnr, Fornamn, Efternamn, Adress, Postnr, Ort, BolagID FROM (
+  SELECT k.Pnr, k.Fornamn, k.Efternamn, k.Adress, k.Postnr, k.Ort
+  FROM dw.Kund k
+  WHERE EXISTS (SELECT 1 FROM [stage].[pml_PersonParameter] WHERE xPerson = k.KundID AND xParameterType = '27' AND value = '1')) a
+  LEFT JOIN
+  (
+  SELECT pp.ForsakringstagareOrgnr, pp.BolagID 
+  FROM [dw].[Prov_Provision] pp) b
+  ON a.Pnr = b.ForsakringstagareOrgnr
+
+
+
+--PEP
+SELECT DISTINCT Pnr, Fornamn, Efternamn, Adress, Postnr, Ort, BolagID FROM (
+  SELECT k.Pnr, k.Fornamn, k.Efternamn, k.Adress, k.Postnr, k.Ort
+  FROM dw.Kund k
+  WHERE EXISTS (SELECT 1 FROM [stage].[pml_PersonParameter] WHERE xPerson = k.KundID AND xParameterType = '26' AND value = '1')) a
+  LEFT JOIN
+  (
+  SELECT pp.ForsakringstagareOrgnr, pp.BolagID 
+  FROM [dw].[Prov_Provision] pp) b
+  ON a.Pnr = b.ForsakringstagareOrgnr
