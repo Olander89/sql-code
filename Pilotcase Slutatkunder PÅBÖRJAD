@@ -81,3 +81,56 @@ JOIN sox.kapital kap ON k.KundID = kap.KundID
 		OR Ort = 'Staffanstorp'		AND kap.Navigera IS NULL	  AND Roll = 'Slutat'		
 		OR Ort = 'Burlöv'			AND kap.Navigera IS NULL	  AND Roll = 'Slutat'		
 	ORDER BY Kapital DESC
+
+==============================================================================================================
+--SENASTE
+
+SELECT DISTINCT
+	r.Team, k.Pnr, k.Namn, kf.Namn AS Foretagsnamn, k.Adress,
+	k.Postnr, k.Ort, k.Hemtelefon, k.Arbetstelefon,
+	k.Mobiltelefon, k.Epostadress, k.Alder
+FROM dw.kund k
+LEFT JOIN dw.Radgivare r On k.RadgivarID = r.RadgivarID
+LEFT JOIN dw.Kundforetag kf ON k.KundforetagID = kf.KundforetagID
+LEFT JOIN sox.kapital kap ON k.KundID = kap.KundID
+WHERE r.Team = 'Team Lindberg'
+AND kf.Namn LIKE '%slutat%' AND Ort = 'Malmö'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Lund'			AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Arlöv'			AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Bunkeflostrand'	AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Klagshamn'		AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Limhamn'			AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Oxie'			AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Tygelsjö'		AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Vellinge'		AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Vintrie'			AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Svedala'			AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Staffanstorp'	AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Burlöv'			AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Trelleborg'		AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Höllviken'		AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Falsterbo'		AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Skanör'			AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Sjöbo'			AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Lomma'			AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Alnarp'			AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Bjärred'			AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Löddeköpinge'	AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Bara'			AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Klågerup'		AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Södra Sandby'	AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Dalby'			AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Genarp'			AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Veberöd'			AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Blentarp'		AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Skurup'			AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Västra Ingelstad'AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Östra Grevie'	AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Anderslöv'		AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Kävlinge'		AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Örtofta'			AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Eslöv'			AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Teckomatorp'		AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Landskrona'		AND r.Team = 'Team Lindberg'
+OR kf.Namn LIKE '%slutat%'  AND Ort = 'Svalöv'			AND r.Team = 'Team Lindberg'
+ORDER BY Ort
