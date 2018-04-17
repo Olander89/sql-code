@@ -1,0 +1,6 @@
+SELECT t.Team, pm.Fornamn, pm.Efternamn, pm.Personnummer FROM stage.pml_Maklare pm
+LEFT JOIN dw.Team t ON pm.xBrokerTeam = t.TeamID
+WHERE Maklartyp = '14' OR Maklartyp = '24'
+AND Efternamn != 'test'
+AND Efternamn != 'Admin'
+ORDER BY pm.Efternamn
