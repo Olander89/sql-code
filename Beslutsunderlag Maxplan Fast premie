@@ -147,3 +147,34 @@ FROM(
   ON maxPl.KundforetagID = forsakrade.KundforetagID
  GROUP BY Team, Radgivare, adm.Namn, maxPl.ForsakringstagareNr, Foretagsnamn, Koncern, Affarstyp, AntalAnstallda, GallandeForsakringar, TotalPremie, forsakrade.Avtalsomrade, berakningsTyp.type
 ORDER BY Foretagsnamn ASC
+
+========================================================================================================================
+
+  SELECT
+	r.Team						AS Team, 
+	r.Namn						AS Rådgivare, 
+	a.Namn						AS Administratör, 
+	f.ForsakringstagareNr		AS Orgnr, 
+	kf.Namn						AS Företagsnamn, 
+	f.Affarstyp					AS Affärstyp, 
+	COUNT(f.KundID)				AS GällandeFörsäkringar, 
+	SUM(f.Premie)				AS TotalPremie, 
+	k.Avtalsomrade				AS Avtalsområde
+  FROM dw.Forsakring f
+	JOIN dw.Kundforetag kf ON f.ForsakringstagareNr = kf.Orgnr
+	JOIN dw.Kund k ON  f.KundID = k.KundID
+	JOIN dw.Radgivare r ON kf.RadgivarID = r.RadgivarID
+	JOIN dw.Administrator a ON kf.AdministratorID = a.AdministratorID
+  WHERE f.Status = 'Gällande'
+  AND f.Affarstyp = 'Maxplan'
+  GROUP BY r.Team, r.Namn, a.Namn, f.ForsakringstagareNr, kf.Namn, f.Affarstyp, k.Avtalsomrade
+  ORDER BY kf.Namn ASC
+
+
+  SELECT f.ForsakringstagareNr, kf.Namn, COUNT(f.KundID) AS GällandeFörsäkringar, SUM(f.Premie) TotalPremie
+  FROM dw.Forsakring f
+  JOIN dw.Kundforetag kf ON f.ForsakringstagareNr = kf.Orgnr
+  WHERE Affarstyp = 'Maxplan'
+  AND Status = 'Gällande'
+  GROUP BY f.ForsakringstagareNr, kf.Namn
+  ORDER BY kf.Namn ASC
