@@ -60,7 +60,7 @@ ORDER BY Foretagsnamn ASC
 
 ========================================================================================================================
 
---SLUTGILTIG
+--SLUTGILTIG (NOT)
 SELECT Team, Radgivare, adm.Namn AS Administrator, maxPl.Orgnr, Foretagsnamn, Koncern, Affarstyp, AntalAnstallda, GallandeForsakringar, TotalPremie, forsakrade.Avtalsomrade, berakningsTyp.type AS Premieberakningsmetod
 FROM(
 (SELECT kf.RadgivarID, f.KundforetagID, f.Orgnr, f.Koncern, kf.Namn as Foretagsnamn, f.Affarstyp, kf.AdministratorID
@@ -102,4 +102,48 @@ JOIN
 --WHERE berakningsTyp.type = 'stepped'
 --OR berakningsTyp.Type = 'special'
 GROUP BY Team, Radgivare, adm.Namn, maxPl.Orgnr, Foretagsnamn, Koncern, Affarstyp, AntalAnstallda, GallandeForsakringar, TotalPremie, forsakrade.Avtalsomrade, berakningsTyp.type
+ORDER BY Foretagsnamn ASC
+
+========================================================================================================================
+
+--SENASTE ITERATION, BEHÖVER FÖRBATTRAS
+SELECT Team, Radgivare, adm.Namn AS Administrator, maxPl.ForsakringstagareNr AS Orgnr, Foretagsnamn, Koncern, Affarstyp, AntalAnstallda, GallandeForsakringar, TotalPremie, forsakrade.Avtalsomrade, berakningsTyp.type AS Premieberakningsmetod
+FROM(
+(SELECT DISTINCT f.KundID, kf.RadgivarID, kf.KundforetagID, f.ForsakringstagareNr, kf.Namn as Foretagsnamn, f.Affarstyp, kf.AdministratorID, kf.Koncern
+  FROM [Datawarehouse].[dw].[forsakring] f
+  JOIN [Datawarehouse].[dw].[Kundforetag] kf
+  ON f.ForsakringstagareNr = kf.Orgnr
+  WHERE f.Affarstyp = 'Maxplan') maxPl
+  JOIN
+(SELECT r.Team, r.Namn AS Radgivare, r.RadgivarID
+  FROM [Datawarehouse].[dw].[Radgivare] r) rad
+  ON maxPl.RadgivarID = rad.RadgivarID
+  LEFT JOIN
+(SELECT a.AdministratorID, a.Namn
+  FROM [Datawarehouse].[dw].[Administrator] a) adm
+  ON maxPl.AdministratorID = adm.AdministratorID
+  JOIN
+(SELECT k.Orgnr AS kOrgnr, k.AntalAnstallda
+  FROM [Datawarehouse].[sox].[koncern] k) koncern
+  ON  maxPl.ForsakringstagareNr = koncern.kOrgnr)
+  LEFT JOIN
+(SELECT cc.id, cc.name, cc.organizationNumber, og.businessType, ps.type
+  FROM [stage].[linda_CustomerCompany] cc
+  JOIN [stage].[linda_OccupationalGroup] og ON cc.id = og.customerCompanyId
+  JOIN [stage].[linda_PremiumScope] ps ON cc.id = ps.id
+  WHERE og.businessType = 'MP') berakningsTyp
+  ON maxPl.ForsakringstagareNr = berakningsTyp.organizationNumber
+  JOIN
+(SELECT KundforetagID, COUNT(forsakring.KundID) AS GallandeForsakringar, SUM(forsakring.Premie) AS TotalPremie, Avtalsomrade FROM
+  (SELECT DISTINCT f.KundID, SUM(f.Premie) AS Premie
+  FROM [Datawarehouse].[dw].[Forsakring] f
+  WHERE "Status" = 'Gällande'
+  GROUP BY f.KundID) forsakring
+  JOIN
+  (SELECT k.KundforetagID, k.KundID, Avtalsomrade
+  FROM [Datawarehouse].[dw].[Kund] k) kund
+  ON forsakring.KundID = kund.KundID
+  GROUP BY KundforetagID, Avtalsomrade) forsakrade
+  ON maxPl.KundforetagID = forsakrade.KundforetagID
+ GROUP BY Team, Radgivare, adm.Namn, maxPl.ForsakringstagareNr, Foretagsnamn, Koncern, Affarstyp, AntalAnstallda, GallandeForsakringar, TotalPremie, forsakrade.Avtalsomrade, berakningsTyp.type
 ORDER BY Foretagsnamn ASC
