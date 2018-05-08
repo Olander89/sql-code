@@ -1,0 +1,28 @@
+CREATE TABLE #Temp1
+(
+Orgnr CHAR(10),
+ForsakringsBolag CHAR(25),
+Premie INT
+)
+
+INSERT INTO #Temp1 (Orgnr, ForsakringsBolag, Premie)
+SELECT alpha.Orgnr, alpha.ForsakringsBolag, alpha.Premie FROM
+(
+SELECT k.Namn, k.Pnr, f.ForsakringstagarTyp, f.Skattekategori, f.Datering, f.Premie, fb.Orgnr, fb.Namn AS ForsakringsBolag
+  FROM [Datawarehouse].[dw].[Forsakring] f
+  JOIN dw.Kund k ON f.KundID = k.KundID
+  JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+  WHERE f.ForsakringstagarTyp = 'Privat'
+  AND f.Skattekategori = 'K'
+  AND f.Status = 'Gällande'
+  AND f.Datering > DATEADD(yy, -1, GETDATE())
+) alpha
+
+SELECT Orgnr, ForsakringsBolag, SUM(Premie) AS TotalPremie
+FROM #Temp1
+GROUP BY Orgnr, ForsakringsBolag
+ORDER BY TotalPremie ASC
+
+DROP TABLE #Temp1
+
+SELECT TOP (1000) * FROM dw.Forsakring
