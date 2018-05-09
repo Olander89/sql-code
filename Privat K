@@ -1,28 +1,42 @@
+SELECT TOP (1000) * FROM dw.Forsakring
+
 CREATE TABLE #Temp1
 (
+Pnr CHAR(12),
 Orgnr CHAR(10),
 ForsakringsBolag CHAR(25),
-Premie INT
+ProvisionsTyp CHAR(50),
+Premie INT,
+ProvisionBrutto INT
 )
 
-INSERT INTO #Temp1 (Orgnr, ForsakringsBolag, Premie)
-SELECT alpha.Orgnr, alpha.ForsakringsBolag, alpha.Premie FROM
+INSERT INTO #Temp1 (Pnr, Orgnr, ForsakringsBolag, ProvisionsTyp, Premie, ProvisionBrutto)
+SELECT alpha.Pnr, alpha.Orgnr, alpha.ForsakringsBolag, alpha.ProvisionsTyp, alpha.Premie, alpha.ProvisionBrutto FROM
 (
-SELECT k.Namn, k.Pnr, f.ForsakringstagarTyp, f.Skattekategori, f.Datering, f.Premie, fb.Orgnr, fb.Namn AS ForsakringsBolag
+SELECT k.Namn, k.Pnr, f.ForsakringstagarTyp, f.Skattekategori, f.Datering, f.Premie, fb.Orgnr, fb.Namn AS ForsakringsBolag, pp.ProvisionBrutto, pp.Provisionstyp, pp.Korning
   FROM [Datawarehouse].[dw].[Forsakring] f
   JOIN dw.Kund k ON f.KundID = k.KundID
   JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+  JOIN dw.Prov_Provision pp ON f.ForsakringsNr = pp.Fnr
   WHERE f.ForsakringstagarTyp = 'Privat'
   AND f.Skattekategori = 'K'
   AND f.Status = 'Gällande'
   AND f.Datering > DATEADD(yy, -1, GETDATE())
+  AND pp.Korning >= f.Datering
 ) alpha
 
-SELECT Orgnr, ForsakringsBolag, SUM(Premie) AS TotalPremie
+SELECT Orgnr, ForsakringsBolag, SUM(Premie) AS TotalPremie, SUM(ProvisionBrutto) AS Provision
 FROM #Temp1
 GROUP BY Orgnr, ForsakringsBolag
 ORDER BY TotalPremie ASC
 
+--Provision SUM, Provisionstyp, Antal
+
+SELECT t.Orgnr, t.ForsakringsBolag, t.ProvisionsTyp, COUNT(t.Pnr) AS AntalFörekomster, SUM(t.Premie) AS TotalPremie, SUM(t.ProvisionBrutto) AS TotalProvision
+FROM #Temp1 t
+GROUP BY t.Orgnr, t.ForsakringsBolag, t.ProvisionsTyp
+ORDER BY Orgnr ASC 
+
 DROP TABLE #Temp1
 
-SELECT TOP (1000) * FROM dw.Forsakring
+
