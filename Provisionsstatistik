@@ -14,6 +14,7 @@ WHERE pp.Korning BETWEEN CONVERT(datetime,'2018-01-01') AND CONVERT(datetime,'20
 GROUP BY kf.Orgnr, kf.Namn, kf.Koncern
 ORDER BY TotalProvision DESC
 
+--Dubbelkolla detta i PML
 SELECT * FROM dw.Kundforetag kf
 RIGHT JOIN #Temp t ON kf.Orgnr = t.Orgnr
 
