@@ -1,0 +1,12 @@
+SELECT a.Ansvmaklare AS Rådgivare, a.Foretag AS Företag, CONCAT(a.Fornamn,  ' ',  a.Efternamn) AS Namn,
+CASE
+	WHEN a.xID IS NULL THEN 'Ej anställd'
+	ELSE 'Anställd'
+END AS Roll
+FROM stage.pml_Anstallda a
+JOIN stage.pml_PublicationXRef pr ON a.xID = pr.xPerson
+WHERE xPublicationDistribution = '17'
+
+SELECT * FROM stage.pml_CompanyPerson cp
+JOIN stage.pml_PublicationXRef pr ON cp.xPerson = pr.xPerson
+WHERE xPublicationDistribution = '17'
