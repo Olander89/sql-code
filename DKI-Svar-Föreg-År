@@ -1,0 +1,12 @@
+SELECT s.Fraga, SUM(s.Betyg) AS SumBetyg, COUNT(pq.xID) AS AntalSvar,
+CASE WHEN
+s.Fraga IS NOT NULL THEN SUM(s.Betyg) / COUNT(pq.xID)
+END AS Snitt
+  FROM [Datawarehouse].[stage].[pml_PersonQuestionnaire] pq
+  JOIN dw.DKIEnkat e ON pq.xID = e.EnkatID
+  JOIN dw.DKISvar s ON pq.xID = s.EnkatID
+  WHERE xCompany = '-21068370'
+  OR xCompany = '-51673'
+  AND dateSent BETWEEN '2016-04-01' AND '2017-03-31'
+  GROUP BY s.Fraga
+  ORDER BY s.Fraga ASC
