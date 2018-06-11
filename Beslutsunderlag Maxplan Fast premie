@@ -150,24 +150,38 @@ ORDER BY Foretagsnamn ASC
 
 ========================================================================================================================
 
-  SELECT
+  USE Datawarehouse
+SELECT
 	r.Team						AS Team, 
 	r.Namn						AS Rådgivare, 
 	a.Namn						AS Administratör, 
 	f.ForsakringstagareNr		AS Orgnr, 
 	kf.Namn						AS Företagsnamn, 
-	f.Affarstyp					AS Affärstyp, 
+	f.Affarstyp					AS Affärstyp,
+	kon.AntalAnstallda			AS AntalAnställda,
 	COUNT(f.KundID)				AS GällandeFörsäkringar, 
 	SUM(f.Premie)				AS TotalPremie, 
-	k.Avtalsomrade				AS Avtalsområde
+	k.Avtalsomrade				AS Avtalsområde,
+	ps.type						AS Premieberakningsmetod
   FROM dw.Forsakring f
 	JOIN dw.Kundforetag kf ON f.ForsakringstagareNr = kf.Orgnr
 	JOIN dw.Kund k ON  f.KundID = k.KundID
 	JOIN dw.Radgivare r ON kf.RadgivarID = r.RadgivarID
 	JOIN dw.Administrator a ON kf.AdministratorID = a.AdministratorID
+	LEFT JOIN dw.Tjanstegrupp tj ON kf.KundforetagID = tj.KundforetagID
+	LEFT JOIN [stage].[linda_CustomerCompany] cc ON kf.Orgnr = cc.organizationNumber
+	LEFT JOIN [stage].[linda_PremiumScope] ps ON cc.id = ps.id
+	LEFT JOIN sox.Koncern kon ON kf.Orgnr = kon.Orgnr
   WHERE f.Status = 'Gällande'
   AND f.Affarstyp = 'Maxplan'
-  GROUP BY r.Team, r.Namn, a.Namn, f.ForsakringstagareNr, kf.Namn, f.Affarstyp, k.Avtalsomrade
+  AND f.ForsakringstagareNr NOT IN
+  (
+  SELECT DISTINCT ForsakringstagareNr
+     FROM dw.Forsakring
+     WHERE Affarstyp = 'SK'
+  )
+  AND tj.Slutdatum IS NULL
+  GROUP BY r.Team, r.Namn, a.Namn, f.ForsakringstagareNr, kf.Namn, f.Affarstyp, kon.AntalAnstallda, k.Avtalsomrade, ps.type
   ORDER BY kf.Namn ASC
 
 
