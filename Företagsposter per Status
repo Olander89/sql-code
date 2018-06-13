@@ -1,0 +1,17 @@
+SELECT asd1.Status2, asd3.Name, asd2.AntalFöretagsposter, asd1.AntalIndividposter FROM
+(
+  (SELECT f.Status2, COUNT(a.xID) AS AntalIndividposter
+  FROM dbo.Anstallda a
+  JOIN dbo.Foretag f ON a.xFORETA = f.xID
+  GROUP BY f.Status2) asd1
+  JOIN
+  (SELECT f.status2, COUNT(f.status2) AS AntalFöretagsposter
+  FROM dbo.Foretag f
+  GROUP BY f.status2) asd2
+  ON asd1.Status2 = asd2.Status2
+  LEFT JOIN
+  (SELECT cs.Name, cs.xID
+  FROM dbo.CompanyStatus cs) asd3
+  ON asd2.Status2 = asd3.xID
+)
+ORDER BY asd2.AntalFöretagsposter DESC
