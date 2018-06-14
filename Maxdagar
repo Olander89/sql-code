@@ -1,4 +1,5 @@
-SELECT a.Ansvmaklare AS Rådgivare, a.Foretag AS Företag, CONCAT(a.Fornamn,  ' ',  a.Efternamn) AS Namn,
+--Anställda
+SELECT a.Ansvmaklare AS Rådgivare, a.Foretag AS Företag, CONCAT(a.Fornamn,  ' ',  a.Efternamn) AS Namn, a.emailadress AS Email,
 CASE
 	WHEN a.xID IS NULL THEN 'Ej anställd'
 	ELSE 'Anställd'
@@ -6,3 +7,17 @@ END AS Roll
 FROM stage.pml_Anstallda a
 JOIN stage.pml_PublicationXRef pr ON a.xID = pr.xPerson
 WHERE xPublicationDistribution = '17'
+
+--Kontaktpersoner
+ SELECT r.Namn AS Rådgivare, kf.Namn AS Företag, CONCAT(p.FirstName,  ' ',  p.LastName) AS Namn, ltrim(ci.ContactData) AS Email, rt.TypeName AS Roll
+ FROM stage.pml_CompanyPerson cp
+  JOIN stage.pml_PublicationXRef pr ON cp.xPerson = pr.xPerson
+  JOIN stage.pml_RoleType rt ON cp.TypeOfRole = rt.TypeCode
+  JOIN stage.pml_Person p ON cp.xPerson = p.xID
+  JOIN dw.Kundforetag kf ON cp.xCompany = kf.KundforetagID
+  JOIN dw.Radgivare r ON kf.RadgivarID = r.RadgivarID
+  JOIN stage.pml_PersonContact pc ON cp.xPerson = pc.xPerson
+  JOIN stage.pml_ContactInfo ci ON pc.xContactInfo = ci.xID
+  WHERE pr.xPublicationDistribution = '17'
+  AND pc.TypeOfContact = 6
+  AND ci.ContactData LIKE '%@%'
