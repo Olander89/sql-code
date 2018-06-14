@@ -42,14 +42,22 @@ if OBJECT_ID('dw.Maxdagar', 'V') is not null
 CREATE VIEW [dw].[vy_Maxdagar]
   (TeamID,
    Team,
-   RådgivarID,
-   Rådgivare,
-   Företag,
+   RadgivarID,
+   Radgivare,
+   Foretag,
    Namn,
    Email,
    Roll
 ) AS
-  SELECT r.TeamID,
+
+  SELECT TeamID, Team, RadgivarID, Rådgivare, Företag, Namn, Email, Roll FROM (
+  SELECT *, ROW_NUMBER() OVER(PARTITION BY Rank# ORDER BY RANK# ASC) AS rn
+  FROM (
+  SELECT DISTINCT Rank#, TeamID, Team, RadgivarID, Rådgivare, Företag, Namn, Email, Roll
+  FROM (
+  SELECT 
+		 RANK() OVER( ORDER BY CONCAT(a.Fornamn,  ' ',  a.Efternamn), a.emailadress ASC) AS Rank#,
+		 r.TeamID,
          r.Team,
          r.RadgivarID,
 		 r.Namn AS Rådgivare,
@@ -65,16 +73,28 @@ CREATE VIEW [dw].[vy_Maxdagar]
   INNER JOIN stage.pml_Anstallda a ON r.RadgivarID = a.xMaklar
   INNER JOIN stage.pml_PublicationXRef pr ON a.xID = pr.xPerson
   WHERE xPublicationDistribution = '17'
+		) a
+		) b
+		) c
+		WHERE c.rn = 1
 
   UNION ALL
 
-  SELECT r.TeamID,
+  SELECT TeamID, Team, RadgivarID, Rådgivare, Företag, Namn, Email, Roll FROM (
+  SELECT *, ROW_NUMBER() OVER(PARTITION BY Rank# ORDER BY RANK# ASC) AS rn
+  FROM (
+  SELECT DISTINCT Rank#, TeamID, Team, RadgivarID, Rådgivare, Företag, Namn, Email, Roll
+  FROM (
+  SELECT 
+		 RANK() OVER( ORDER BY CONCAT(p.FirstName,  ' ',  p.LastName), ltrim(ci.ContactData) ASC) AS Rank#,
+		 r.TeamID,
          r.Team,
          r.RadgivarID,
 		 r.Namn AS Rådgivare,
 		 kf.Namn AS Företag,
 		 CONCAT(p.FirstName,  ' ',  p.LastName) AS Namn,
 		 ltrim(ci.ContactData) AS Email,
+		 rt.TypeCode,
 		 rt.TypeName AS Roll
   FROM stage.pml_CompanyPerson cp
   INNER JOIN stage.pml_PublicationXRef pr ON cp.xPerson = pr.xPerson
@@ -88,6 +108,8 @@ CREATE VIEW [dw].[vy_Maxdagar]
   WHERE pr.xPublicationDistribution = '17'
   AND pc.TypeOfContact = 6
   AND ci.ContactData LIKE '%@%'
-GO
+	) a 
+	) b
+	) c WHERE c.rn = 1
 
 
