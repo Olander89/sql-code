@@ -21,3 +21,73 @@ WHERE xPublicationDistribution = '17'
   WHERE pr.xPublicationDistribution = '17'
   AND pc.TypeOfContact = 6
   AND ci.ContactData LIKE '%@%'
+
+
+--VIEW
+
+USE [Datawarehouse]
+GO
+
+/****** Object:  View [dw].[vy_Maxdagar]    Script Date: 2018-06-14 11:14:02 ******/
+SET ANSI_NULLS ON
+GO
+
+--------------
+-- Maxdagar
+--------------
+
+if OBJECT_ID('dw.Maxdagar', 'V') is not null
+  drop view dw.vy_Maxdagar;
+
+CREATE VIEW [dw].[vy_Maxdagar]
+  (TeamID,
+   Team,
+   RådgivarID,
+   Rådgivare,
+   Företag,
+   Namn,
+   Email,
+   Roll
+) AS
+  SELECT r.TeamID,
+         r.Team,
+         r.RadgivarID,
+		 r.Namn AS Rådgivare,
+		 a.Foretag AS Företag,
+		 CONCAT(a.Fornamn,  ' ',  a.Efternamn) AS Namn,
+		 a.emailadress AS Email,
+		 CASE
+		 WHEN a.xID IS NULL THEN 'Ej anställd'
+		 ELSE 'Anställd'
+		 END AS Roll 
+  FROM   dw.Radgivare r
+  INNER JOIN dw.Team t ON r.TeamID = t.TeamID
+  INNER JOIN stage.pml_Anstallda a ON r.RadgivarID = a.xMaklar
+  INNER JOIN stage.pml_PublicationXRef pr ON a.xID = pr.xPerson
+  WHERE xPublicationDistribution = '17'
+
+  UNION ALL
+
+  SELECT r.TeamID,
+         r.Team,
+         r.RadgivarID,
+		 r.Namn AS Rådgivare,
+		 kf.Namn AS Företag,
+		 CONCAT(p.FirstName,  ' ',  p.LastName) AS Namn,
+		 ltrim(ci.ContactData) AS Email,
+		 rt.TypeName AS Roll
+  FROM stage.pml_CompanyPerson cp
+  INNER JOIN stage.pml_PublicationXRef pr ON cp.xPerson = pr.xPerson
+  INNER JOIN stage.pml_RoleType rt ON cp.TypeOfRole = rt.TypeCode
+  INNER JOIN stage.pml_Person p ON cp.xPerson = p.xID
+  INNER JOIN dw.Kundforetag kf ON cp.xCompany = kf.KundforetagID
+  INNER JOIN dw.Radgivare r ON kf.RadgivarID = r.RadgivarID
+  INNER JOIN dw.Team t ON r.TeamID = t.TeamID
+  INNER JOIN stage.pml_PersonContact pc ON cp.xPerson = pc.xPerson
+  INNER JOIN stage.pml_ContactInfo ci ON pc.xContactInfo = ci.xID
+  WHERE pr.xPublicationDistribution = '17'
+  AND pc.TypeOfContact = 6
+  AND ci.ContactData LIKE '%@%'
+GO
+
+
