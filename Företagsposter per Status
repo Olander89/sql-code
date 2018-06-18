@@ -1,3 +1,4 @@
+-- ATT GÖRA - Addera koppling med BrokerTeam & Maklare
 SELECT asd1.Status2, asd3.Name, asd2.AntalFöretagsposter, asd1.AntalIndividposter FROM
 (
   (SELECT f.Status2, COUNT(a.xID) AS AntalIndividposter
