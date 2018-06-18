@@ -1,0 +1,29 @@
+SELECT
+a.Team,
+a.Namn,
+kf.Orgnr,
+kf.Namn,
+kf.Koncern
+FROM dw.Kundforetag kf
+JOIN dw.Administrator a ON kf.AdministratorID = a.AdministratorID
+WHERE a.AdministratorID = '-271'
+
+SELECT
+r.Team,
+r.Namn,
+kf.Orgnr,
+kf.Namn,
+kf.Koncern
+FROM dw.Kundforetag kf
+JOIN dw.Radgivare r ON kf.RadgivarID = r.RadgivarID
+WHERE r.RadgivarID = '-11455998'
+
+SELECT
+r.Team,
+r.Namn,
+kf.Orgnr,
+kf.Namn,
+kf.Koncern
+FROM dw.Kundforetag kf
+JOIN dw.Radgivare r ON kf.RadgivarID = r.RadgivarID
+WHERE r.RadgivarID = '-4623354'
