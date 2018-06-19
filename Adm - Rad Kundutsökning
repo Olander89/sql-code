@@ -1,4 +1,5 @@
-SELECT
+SELECT DISTINCT
+a.AdministratorID,
 a.Team,
 a.Namn,
 kf.Orgnr,
@@ -6,9 +7,17 @@ kf.Namn,
 kf.Koncern
 FROM dw.Kundforetag kf
 JOIN dw.Administrator a ON kf.AdministratorID = a.AdministratorID
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
 WHERE a.AdministratorID = '-271'
+AND f.ForsakringstagareNr IN
+  (
+  SELECT DISTINCT ForsakringstagareNr
+     FROM dw.Forsakring
+     WHERE Affarstyp = 'SK'
+	 OR Affarstyp = 'Maxplan PC'
+)
 
-SELECT
+SELECT DISTINCT
 r.Team,
 r.Namn,
 kf.Orgnr,
@@ -16,9 +25,17 @@ kf.Namn,
 kf.Koncern
 FROM dw.Kundforetag kf
 JOIN dw.Radgivare r ON kf.RadgivarID = r.RadgivarID
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
 WHERE r.RadgivarID = '-11455998'
+AND f.ForsakringstagareNr IN
+  (
+  SELECT DISTINCT ForsakringstagareNr
+     FROM dw.Forsakring
+     WHERE Affarstyp = 'SK'
+	 OR Affarstyp = 'Maxplan PC'
+)
 
-SELECT
+SELECT DISTINCT
 r.Team,
 r.Namn,
 kf.Orgnr,
@@ -26,4 +43,12 @@ kf.Namn,
 kf.Koncern
 FROM dw.Kundforetag kf
 JOIN dw.Radgivare r ON kf.RadgivarID = r.RadgivarID
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
 WHERE r.RadgivarID = '-4623354'
+AND f.ForsakringstagareNr IN
+  (
+  SELECT DISTINCT ForsakringstagareNr
+     FROM dw.Forsakring
+     WHERE Affarstyp = 'SK'
+	 OR Affarstyp = 'Maxplan PC'
+)
