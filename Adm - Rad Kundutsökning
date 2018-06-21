@@ -52,3 +52,22 @@ AND f.ForsakringstagareNr IN
      WHERE Affarstyp = 'SK'
 	 OR Affarstyp = 'Maxplan PC'
 )
+
+SELECT DISTINCT
+r.Team,
+r.Namn AS Rådgivare,
+kf.Orgnr,
+kf.Namn AS Företag,
+kf.Koncern
+FROM dw.Kundforetag kf
+JOIN dw.Radgivare r ON kf.RadgivarID = r.RadgivarID
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
+WHERE r.Team = 'Team Kåhlin'
+AND f.ForsakringstagareNr IN
+  (
+  SELECT DISTINCT ForsakringstagareNr
+     FROM dw.Forsakring
+     WHERE Affarstyp = 'SK'
+	 OR Affarstyp = 'Maxplan PC'
+)
+ORDER BY r.Namn
