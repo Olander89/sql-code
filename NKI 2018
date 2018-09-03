@@ -1,0 +1,17 @@
+/****** Script for SelectTopNRows command from SSMS  ******/
+SELECT DISTINCT f.Orgnr, f.Foretag, pc.xContactInfo
+  FROM [stage].[pml_CompanyPerson] cp
+  --JOIN [stage].[pml_RoleType] rt ON cp.TypeOfRole = rt.TypeCode
+  --JOIN [stage].[pml_Person] p ON cp.xPerson = p.xID
+  JOIN [stage].[pml_PersonContact] pc ON cp.xPerson = pc.xPerson
+  JOIN [stage].[pml_Foretag] f ON cp.xCompany = f.xID
+  JOIN [stage].[pml_ContactInfo] --FORTS
+  WHERE TypeOfRole = '3001'			--NKI-mottagare
+     OR TypeOfRole = '1001'			--Rapportmottagare
+	 OR TypeOfRole = '8'			--Ekonomichef 
+	 OR TypeOfRole = '60'			--Ekonomichef /-ansvarig
+	 OR TypeOfRole = '2'			--Personalchef
+	 OR TypeOfRole = '85'			--Personalchef /-ansvarig
+	 OR TypeOfRole = '1'			--VD
+	 OR TypeOFRole = '-65'			--Ägare
+  ORDER BY Orgnr ASC
