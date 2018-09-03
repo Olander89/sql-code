@@ -15,3 +15,6 @@ SELECT DISTINCT f.Orgnr, f.Foretag, ci.ContactData
 	 OR TypeOfRole = '1'			--VD
 	 OR TypeOFRole = '-65'			--Ägare
   ORDER BY Orgnr ASC
+  
+  --ATT GÖRA
+  --Endast email i ContactData 'TypeOfContact' från pml_PersonContact
