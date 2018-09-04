@@ -1,0 +1,160 @@
+SELECT a.Orgnr, a.Namn, b.[Epost VD], c.[Epost Ägare], d.[Epost Ekonomichef], e.[Epost Personalchef], f.[Epost NKI-mottagare], 
+g.Intakt AS Intäkt, h.ProvisionNetto AS 'Sakprovisioner 2017-07 - 2018-07', i.senaste_loneuppgift AS 'Lönedatum 2018',
+ x.Team, x.Namn, b.fPostnr AS Postnr, j.[Antal Anställda] FROM
+
+/*Aktiva Kundföretag */
+(SELECT DISTINCT kf.Orgnr, kf.Namn
+	FROM dw.Kundforetag kf
+	WHERE kf.Aktiv = 'j') a
+
+LEFT JOIN
+
+/*Kontaktpersoner från PML VD*/
+(select top 100000 f.orgnr, f.foretag, f.fPostnr, p.FirstName, p.LastName, rt.TypeName Roll, ci.ContactData as 'Epost VD'
+-- pc.TypeOfContact, ct.TypeName Kontakttyp
+from stage.pml_foretag f
+left join stage.pml_CompanyPerson cp on cp.xCompany = f.xId
+left join stage.pml_RoleType rt on rt.TypeCode=cp.TypeOfRole
+left join stage.pml_Person p on p.XId=cp.xPerson
+left join stage.pml_PersonContact pc on pc.xPerson=p.xId and pc.TypeOfContact = 6
+left join stage.pml_ContactInfo ci on ci.xId=pc.xContactInfo
+where f.orgnr > '01'
+and f.status2 = 1
+and ((rt.TypeName like '%VD%' or rt.TypeName like '%verkst%') and rt.TypeName not like '%vice%' and rt.TypeName not like '%assistent%')
+and not rt.TypeName like '%NKI%'
+and not rt.TypeName like '%ägare%'
+and not(rt.TypeName like '%ekon%' and rt.TypeName not like '%assist%')
+and not(rt.TypeName like '%personal%' and rt.TypeName not like '%admin%' and rt.TypeName not like '%specialist%')
+and len(ltrim(ci.ContactData)) > 0) b
+
+ON a.Orgnr = b.Orgnr
+LEFT JOIN
+
+(select top 100000 f.orgnr, f.foretag, p.FirstName, p.LastName, rt.TypeName Roll, ci.ContactData as 'Epost Ägare'
+-- pc.TypeOfContact, ct.TypeName Kontakttyp
+from stage.pml_foretag f
+left join stage.pml_CompanyPerson cp on cp.xCompany = f.xId
+left join stage.pml_RoleType rt on rt.TypeCode=cp.TypeOfRole
+left join stage.pml_Person p on p.XId=cp.xPerson
+left join stage.pml_PersonContact pc on pc.xPerson=p.xId and pc.TypeOfContact = 6
+left join stage.pml_ContactInfo ci on ci.xId=pc.xContactInfo
+where f.orgnr > '01'
+and f.status2 = 1
+and not ((rt.TypeName like '%VD%' or rt.TypeName like '%verkst%') and rt.TypeName not like '%vice%' and rt.TypeName not like '%assistent%')
+and not rt.TypeName like '%NKI%'
+and rt.TypeName like '%ägare%'
+and not(rt.TypeName like '%ekon%' and rt.TypeName not like '%assist%')
+and not(rt.TypeName like '%personal%' and rt.TypeName not like '%admin%' and rt.TypeName not like '%specialist%')
+and len(ltrim(ci.ContactData)) > 0) c
+
+ON a.Orgnr = c.Orgnr
+LEFT JOIN
+
+(select top 100000 f.orgnr, f.foretag, p.FirstName, p.LastName, rt.TypeName Roll, ci.ContactData as 'Epost Ekonomichef'
+-- pc.TypeOfContact, ct.TypeName Kontakttyp
+from stage.pml_foretag f
+left join stage.pml_CompanyPerson cp on cp.xCompany = f.xId
+left join stage.pml_RoleType rt on rt.TypeCode=cp.TypeOfRole
+left join stage.pml_Person p on p.XId=cp.xPerson
+left join stage.pml_PersonContact pc on pc.xPerson=p.xId and pc.TypeOfContact = 6
+left join stage.pml_ContactInfo ci on ci.xId=pc.xContactInfo
+where f.orgnr > '01'
+and f.status2 = 1
+and not ((rt.TypeName like '%VD%' or rt.TypeName like '%verkst%') and rt.TypeName not like '%vice%' and rt.TypeName not like '%assistent%')
+and not rt.TypeName like '%NKI%'
+and not rt.TypeName like '%ägare%'
+and (rt.TypeName like '%ekon%' and rt.TypeName not like '%assist%')
+and not(rt.TypeName like '%personal%' and rt.TypeName not like '%admin%' and rt.TypeName not like '%specialist%')
+and len(ltrim(ci.ContactData)) > 0) d
+
+ON a.Orgnr = d.Orgnr
+LEFT JOIN
+
+(select top 100000 f.orgnr, f.foretag, p.FirstName, p.LastName, rt.TypeName Roll, ci.ContactData as 'Epost Personalchef'
+-- pc.TypeOfContact, ct.TypeName Kontakttyp
+from stage.pml_foretag f
+left join stage.pml_CompanyPerson cp on cp.xCompany = f.xId
+left join stage.pml_RoleType rt on rt.TypeCode=cp.TypeOfRole
+left join stage.pml_Person p on p.XId=cp.xPerson
+left join stage.pml_PersonContact pc on pc.xPerson=p.xId and pc.TypeOfContact = 6
+left join stage.pml_ContactInfo ci on ci.xId=pc.xContactInfo
+where f.orgnr > '01'
+and f.status2 = 1
+and not ((rt.TypeName like '%VD%' or rt.TypeName like '%verkst%') and rt.TypeName not like '%vice%' and rt.TypeName not like '%assistent%')
+and not rt.TypeName like '%NKI%'
+and not rt.TypeName like '%ägare%'
+and not(rt.TypeName like '%ekon%' and rt.TypeName not like '%assist%')
+and (rt.TypeName like '%personal%' and rt.TypeName not like '%admin%' and rt.TypeName not like '%specialist%')
+and len(ltrim(ci.ContactData)) > 0) e
+
+ON a.Orgnr = e.Orgnr
+LEFT JOIN
+
+(select top 100000 f.orgnr, f.foretag, p.FirstName, p.LastName, rt.TypeName Roll, ci.ContactData as 'Epost NKI-mottagare'
+from stage.pml_foretag f
+left join stage.pml_CompanyPerson cp on cp.xCompany = f.xId
+left join stage.pml_RoleType rt on rt.TypeCode=cp.TypeOfRole
+left join stage.pml_Person p on p.XId=cp.xPerson
+left join stage.pml_PersonContact pc on pc.xPerson=p.xId and pc.TypeOfContact = 6
+left join stage.pml_ContactInfo ci on ci.xId=pc.xContactInfo
+where f.orgnr > '01'
+and f.status2 = 1
+and not ((rt.TypeName like '%VD%' or rt.TypeName like '%verkst%') and rt.TypeName not like '%vice%' and rt.TypeName not like '%assistent%')
+and rt.TypeName like '%NKI%'
+and not rt.TypeName like '%ägare%'
+and not(rt.TypeName like '%ekon%' and rt.TypeName not like '%assist%')
+and not(rt.TypeName like '%personal%' and rt.TypeName not like '%admin%' and rt.TypeName not like '%specialist%')
+and len(ltrim(ci.ContactData)) > 0) f
+
+ON a.Orgnr = f.Orgnr
+LEFT JOIN 
+
+/* Intäkter från sox. */
+(select i.orgnr, i.intakt, min(kf.Skotselfullmakt) Skotselfullmakt , min(kf.Aktiv) Aktiv, min(kf.Prospekt) Prospekt
+from sox.intakt_orgnr i
+left join dw.Kundforetag kf on kf.Orgnr = i.orgnr
+group by i.Orgnr, i.intakt) g
+
+ON a.Orgnr = g.Orgnr
+LEFT JOIN
+
+/* SAK-provisioner från scorecard */
+(select ForsakringstagareOrgnr, min(Period) minPeriod, max(Period) maxPeriod, Produktgrupp, sum(ProvisionNetto) ProvisionNetto
+-- , Produkt, , Forsakringstagare, ForsakradPnr, Forsakrad, Fnr, Maklarkod, Kostnadsstalle, Kostnadsbarare, Mottagare, Andel / 100 as Andel, ProvisionNetto, Fordelningstyp
+from dw.vy_Prov_Provision
+where Period >= '2017-07'
+and   Period <= '2018-07'
+and Produktgrupp = 'Sakförsäkring'
+group by ForsakringstagareOrgnr, Produktgrupp) h
+
+ON a.Orgnr = h.ForsakringstagareOrgnr
+LEFT JOIN
+
+(select f.OrgNr, f.Foretag, count(a.xId) antalanst, max(datum) senaste_loneuppgift
+from stage.pml_loner l
+join stage.pml_anstallda a ON a.xid = l.xAnstal
+join stage.pml_foretag f on f.xId = a.xForeta
+--where l.xModified > '140102111213'
+where l.datum >= '2018-01-01'
+and f.status2 = 1
+and f.orgnr > '000000'
+group by f.OrgNr, f.Foretag) i
+
+ON a.Orgnr = i.Orgnr
+LEFT JOIN
+
+(SELECT kf.Orgnr, r.Team, r.Namn
+FROM dw.Radgivare r
+JOIN dw.Kundforetag kf ON r.RadgivarID = kf.RadgivarID) x
+
+ON a.Orgnr = x.Orgnr
+LEFT JOIN 
+
+(SELECT kf.Orgnr, COUNT(k.KundID) AS 'Antal Anställda'
+FROM dw.Kund k
+JOIN dw.Kundforetag kf ON k.KundforetagID = kf.KundforetagID
+GROUP BY kf.Orgnr) j
+
+ON a.Orgnr = j.Orgnr
+WHERE a.Orgnr IS NOT NULL
+ORDER BY Orgnr
