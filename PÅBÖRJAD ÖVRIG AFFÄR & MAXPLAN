@@ -1,0 +1,178 @@
+SELECT DISTINCT
+asd1.Orgnr, asd1.[Antal Försäkrade], asd2.[Kapital Storebrand], asd3.[Kapital Movestic],
+asd4.[Kapital Nordea Liv], asd5.[Kapital Danica Pension], asd6.[Kapital Alecta], asd7.[Kapital SEB Trygg Liv],
+asd8.[Kapital Folksam], asd9.[Kapital Handelsbanken Liv], asd10.[Kapital Förenade Liv], asd11.[Kapital AMF Pension],
+asd12.[Kapital Länsförsäkringar], asd13.[Kapital Swedbank Försäkring], asd14.[Kapital If Skadeförsäkring], asd15.[Kapital Euro Accident],
+asd16.[Kapital Bliwa Livförsäkring], asd17.[Kapital Brummer Life], asd18.[Kapital Bankpension Sverige AB], asd19.[Kapital SPP Livförsäkring],
+asd20.[Kapital Skandia], asd21.[Kapital DKV Hälsa], asd1.[Samlat Kapital]
+FROM(
+SELECT DISTINCT
+kf.Orgnr, kf.Namn, COUNT(f.KundID) AS 'Antal Försäkrade', SUM(f.Varde) AS 'Samlat Kapital'
+FROM dw.Kundforetag kf
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
+WHERE kf.Aktiv = 'j'
+-- Plocka bort IBM, som inte längre är vår kund
+AND kf.Orgnr != '5560266883'
+AND (EXISTS (select 1 from dw.Prov_Provision p where p.Period  BETWEEN '2017-09' AND '2018-10' AND p.ForsakringstagareOrgnr = kf.Orgnr) OR
+EXISTS (select 1 from dw.Arvode ar where ar.Period BETWEEN '2017-09' AND '2018-10' AND ar.Orgnr = kf.Orgnr))
+GROUP BY kf.Orgnr, kf.Namn) asd1
+LEFT JOIN
+(SELECT DISTINCT kf.Orgnr, fb.Namn, SUM(f.Varde) AS 'Kapital Storebrand'
+FROM dw.Kundforetag kf
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+WHERE fb.Namn = 'Storebrand'
+GROUP BY kf.Orgnr, fb.Namn) asd2
+ON asd1.Orgnr = asd2.Orgnr
+LEFT JOIN
+(SELECT DISTINCT kf.Orgnr, fb.Namn, SUM(f.Varde) AS 'Kapital Movestic'
+FROM dw.Kundforetag kf
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+WHERE fb.Namn = 'Movestic'
+GROUP BY kf.Orgnr, fb.Namn) asd3
+ON asd1.Orgnr = asd3.Orgnr
+LEFT JOIN
+(SELECT DISTINCT kf.Orgnr, fb.Namn, SUM(f.Varde) AS 'Kapital Nordea Liv'
+FROM dw.Kundforetag kf
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+WHERE fb.Namn = 'Nordea Liv'
+GROUP BY kf.Orgnr, fb.Namn) asd4
+ON asd1.Orgnr = asd4.Orgnr
+LEFT JOIN
+(SELECT DISTINCT kf.Orgnr, fb.Namn, SUM(f.Varde) AS 'Kapital Danica Pension'
+FROM dw.Kundforetag kf
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+WHERE fb.Namn = 'Danica Pension'
+GROUP BY kf.Orgnr, fb.Namn) asd5
+ON asd1.Orgnr = asd5.Orgnr
+LEFT JOIN
+(SELECT DISTINCT kf.Orgnr, fb.Namn, SUM(f.Varde) AS 'Kapital Alecta'
+FROM dw.Kundforetag kf
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+WHERE fb.Namn = 'Alecta'
+GROUP BY kf.Orgnr, fb.Namn) asd6
+ON asd1.Orgnr = asd6.Orgnr
+LEFT JOIN
+(SELECT DISTINCT kf.Orgnr, fb.Namn, SUM(f.Varde) AS 'Kapital SEB Trygg Liv'
+FROM dw.Kundforetag kf
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+WHERE fb.Namn = 'SEB Trygg Liv'
+GROUP BY kf.Orgnr, fb.Namn) asd7
+ON asd1.Orgnr = asd7.Orgnr
+LEFT JOIN
+(SELECT DISTINCT kf.Orgnr, fb.Namn, SUM(f.Varde) AS 'Kapital Folksam'
+FROM dw.Kundforetag kf
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+WHERE fb.Namn = 'Folksam'
+GROUP BY kf.Orgnr, fb.Namn) asd8
+ON asd1.Orgnr = asd8.Orgnr
+LEFT JOIN
+(SELECT DISTINCT kf.Orgnr, fb.Namn, SUM(f.Varde) AS 'Kapital Handelsbanken Liv'
+FROM dw.Kundforetag kf
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+WHERE fb.Namn = 'Handelsbanken Liv'
+GROUP BY kf.Orgnr, fb.Namn) asd9
+ON asd1.Orgnr = asd9.Orgnr
+LEFT JOIN
+(SELECT DISTINCT kf.Orgnr, fb.Namn, SUM(f.Varde) AS 'Kapital Förenade Liv'
+FROM dw.Kundforetag kf
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+WHERE fb.Namn = 'Förenade Liv'
+GROUP BY kf.Orgnr, fb.Namn) asd10
+ON asd1.Orgnr = asd10.Orgnr
+LEFT JOIN
+(SELECT DISTINCT kf.Orgnr, fb.Namn, SUM(f.Varde) AS 'Kapital AMF Pension'
+FROM dw.Kundforetag kf
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+WHERE fb.Namn = 'AMF Pension'
+GROUP BY kf.Orgnr, fb.Namn) asd11
+ON asd1.Orgnr = asd11.Orgnr
+LEFT JOIN
+(SELECT DISTINCT kf.Orgnr, fb.Namn, SUM(f.Varde) AS 'Kapital Länsförsäkringar'
+FROM dw.Kundforetag kf
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+WHERE fb.Namn = 'Länsförsäkringar'
+GROUP BY kf.Orgnr, fb.Namn) asd12
+ON asd1.Orgnr = asd12.Orgnr
+LEFT JOIN
+(SELECT DISTINCT kf.Orgnr, fb.Namn, SUM(f.Varde) AS 'Kapital Swedbank Försäkring'
+FROM dw.Kundforetag kf
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+WHERE fb.Namn = 'Swedbank Försäkring'
+GROUP BY kf.Orgnr, fb.Namn) asd13
+ON asd1.Orgnr = asd13.Orgnr
+LEFT JOIN
+(SELECT DISTINCT kf.Orgnr, fb.Namn, SUM(f.Varde) AS 'Kapital If Skadeförsäkring'
+FROM dw.Kundforetag kf
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+WHERE fb.Namn = 'If Skadeförsäkring'
+GROUP BY kf.Orgnr, fb.Namn) asd14
+ON asd1.Orgnr = asd14.Orgnr
+LEFT JOIN
+(SELECT DISTINCT kf.Orgnr, fb.Namn, SUM(f.Varde) AS 'Kapital Euro Accident'
+FROM dw.Kundforetag kf
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+WHERE fb.Namn = 'Euro Accident'
+GROUP BY kf.Orgnr, fb.Namn) asd15
+ON asd1.Orgnr = asd15.Orgnr
+LEFT JOIN
+(SELECT DISTINCT kf.Orgnr, fb.Namn, SUM(f.Varde) AS 'Kapital Bliwa Livförsäkring'
+FROM dw.Kundforetag kf
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+WHERE fb.Namn = 'Bliwa Livförsäkring'
+GROUP BY kf.Orgnr, fb.Namn) asd16
+ON asd1.Orgnr = asd16.Orgnr
+LEFT JOIN
+(SELECT DISTINCT kf.Orgnr, fb.Namn, SUM(f.Varde) AS 'Kapital Brummer Life'
+FROM dw.Kundforetag kf
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+WHERE fb.Namn = 'Brummer Life'
+GROUP BY kf.Orgnr, fb.Namn) asd17
+ON asd1.Orgnr = asd17.Orgnr
+LEFT JOIN
+(SELECT DISTINCT kf.Orgnr, fb.Namn, SUM(f.Varde) AS 'Kapital Bankpension Sverige AB'
+FROM dw.Kundforetag kf
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+WHERE fb.Namn = 'Bankpension Sverige AB'
+GROUP BY kf.Orgnr, fb.Namn) asd18
+ON asd1.Orgnr = asd18.Orgnr
+LEFT JOIN
+(SELECT DISTINCT kf.Orgnr, fb.Namn, SUM(f.Varde) AS 'Kapital SPP Livförsäkring'
+FROM dw.Kundforetag kf
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+WHERE fb.Namn = 'SPP Livförsäkring'
+GROUP BY kf.Orgnr, fb.Namn) asd19
+ON asd1.Orgnr = asd19.Orgnr
+LEFT JOIN
+(SELECT DISTINCT kf.Orgnr, fb.Namn, SUM(f.Varde) AS 'Kapital Skandia'
+FROM dw.Kundforetag kf
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+WHERE fb.Namn = 'Skandia'
+GROUP BY kf.Orgnr, fb.Namn) asd20
+ON asd1.Orgnr = asd20.Orgnr
+LEFT JOIN
+(SELECT DISTINCT kf.Orgnr, fb.Namn, SUM(f.Varde) AS 'Kapital DKV Hälsa'
+FROM dw.Kundforetag kf
+JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+WHERE fb.Namn = 'DKV Hälsa'
+GROUP BY kf.Orgnr, fb.Namn) asd21
+ON asd1.Orgnr = asd21.Orgnr
