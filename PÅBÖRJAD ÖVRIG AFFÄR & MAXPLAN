@@ -4,18 +4,20 @@ asd4.[Kapital Nordea Liv], asd5.[Kapital Danica Pension], asd6.[Kapital Alecta],
 asd8.[Kapital Folksam], asd9.[Kapital Handelsbanken Liv], asd10.[Kapital Förenade Liv], asd11.[Kapital AMF Pension],
 asd12.[Kapital Länsförsäkringar], asd13.[Kapital Swedbank Försäkring], asd14.[Kapital If Skadeförsäkring], asd15.[Kapital Euro Accident],
 asd16.[Kapital Bliwa Livförsäkring], asd17.[Kapital Brummer Life], asd18.[Kapital Bankpension Sverige AB], asd19.[Kapital SPP Livförsäkring],
-asd20.[Kapital Skandia], asd21.[Kapital DKV Hälsa], asd1.[Samlat Kapital]
+asd20.[Kapital Skandia], asd21.[Kapital DKV Hälsa], asd1.[Samlat Kapital], asd1.Skattekategori
 FROM(
 SELECT DISTINCT
-kf.Orgnr, kf.Namn, COUNT(f.KundID) AS 'Antal Försäkrade', SUM(f.Varde) AS 'Samlat Kapital'
+kf.Orgnr, kf.Namn, COUNT(f.KundID) AS 'Antal Försäkrade', SUM(f.Varde) AS 'Samlat Kapital', f.Skattekategori
 FROM dw.Kundforetag kf
 JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
 WHERE kf.Aktiv = 'j'
+AND f.Affarstyp IS NULL
+OR f.Affarstyp = 'Maxplan'
 -- Plocka bort IBM, som inte längre är vår kund
 AND kf.Orgnr != '5560266883'
 AND (EXISTS (select 1 from dw.Prov_Provision p where p.Period  BETWEEN '2017-09' AND '2018-10' AND p.ForsakringstagareOrgnr = kf.Orgnr) OR
 EXISTS (select 1 from dw.Arvode ar where ar.Period BETWEEN '2017-09' AND '2018-10' AND ar.Orgnr = kf.Orgnr))
-GROUP BY kf.Orgnr, kf.Namn) asd1
+GROUP BY kf.Orgnr, kf.Namn, f.Skattekategori) asd1
 LEFT JOIN
 (SELECT DISTINCT kf.Orgnr, fb.Namn, SUM(f.Varde) AS 'Kapital Storebrand'
 FROM dw.Kundforetag kf
@@ -176,3 +178,4 @@ JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
 WHERE fb.Namn = 'DKV Hälsa'
 GROUP BY kf.Orgnr, fb.Namn) asd21
 ON asd1.Orgnr = asd21.Orgnr
+ORDER BY Orgnr, [Antal Försäkrade] DESC
