@@ -179,3 +179,21 @@ WHERE fb.Namn = 'DKV Hälsa'
 GROUP BY kf.Orgnr, fb.Namn) asd21
 ON asd1.Orgnr = asd21.Orgnr
 ORDER BY Orgnr, [Antal Försäkrade] DESC
+
+
+================================================================================================
+
+
+SELECT kf.Orgnr, COUNT(f.KundID) AS 'Antal Ordinarie/Maxplan', SUM(f.Varde) AS 'Samlat Kapital', SUM(p.Tjp) AS 'Samlad Premie'
+  FROM dw.Kundforetag kf
+  JOIN dw.Forsakring f ON kf.Orgnr = f.ForsakringstagareNr
+  LEFT JOIN dw.Premie p ON f.KundID = p.KundID
+  WHERE kf.Aktiv = 'j'
+  AND f.Affarstyp = 'Maxplan'
+  OR f.Affarstyp IS NULL
+  AND kf.Orgnr != '5560266883'
+  AND kf.Namn NOT LIKE '%slutat%'
+  AND (EXISTS (SELECT 1 FROM dw.Prov_Provision p WHERE p.Period  BETWEEN '2017-09' AND '2018-10' AND p.ForsakringstagareOrgnr = kf.Orgnr) OR
+  EXISTS (SELECT 1 FROM dw.Arvode ar WHERE ar.Period BETWEEN '2017-09' AND '2018-10' AND ar.Orgnr = kf.Orgnr))
+  GROUP BY kf.Orgnr
+  ORDER BY kf.Orgnr
