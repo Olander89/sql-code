@@ -1,0 +1,309 @@
+--------------------------------
+--
+-- SOX - Intäktsanalys - Q1 2018
+--
+--------------------------------
+
+/*
+Förutsättningar:
+
+Sammanslagning av provisionstyper:
+
+Premieersättning        -->     Premieersättning
+Provision               -->     Premieersättning
+Korrigeringar           -->     Premieersättning
+Manuell transaktion     -->     Premieersättning
+Konverteringsavgift     -->     Premieersättning
+
+Kapitalersättning       -->     Kapitalersättning
+Engångspremie           -->     Engångspremie
+Up-front                -->     Up-front
+Styckersättning         -->     Styckersättning
+
+Annullation             -->     Annullation
+Återtag                 -->     Annullation
+
+
+*/
+
+
+--------------------------------------
+-- Skapa tabell för aktuell tidsperiod
+--------------------------------------
+
+create table #period (period char(7));
+
+insert into #period values ('2018-01');
+insert into #period values ('2018-02');
+insert into #period values ('2018-12');
+
+
+----------------------------------------------------------
+-- Samla ihop de org nr som är kopplade till externa bolag
+----------------------------------------------------------
+
+drop table #temp;
+
+select distinct p.ForsakringstagareOrgnr as ForsakringstagareNr
+into #temp
+from #period pe, dw.Prov_Provision p
+where p.Period = pe.period
+  and p.Mottagartyp = 'Kundföretag'
+  and len(p.ForsakringstagareOrgnr) = 10
+  and substring(p.ForsakringstagareOrgnr, 3, 2) > '12';
+
+
+------------------------
+-- Sammanställ provision
+------------------------
+
+drop table tmp_Provision_2018;
+
+create table tmp_Provision_2018
+  (Kvartal                char(2),
+   Period                 char(7),
+   ForsakringsbolagID     int,
+   ForsakringsNr          varchar(20),
+   Provisionstyp          varchar(50),
+   Produktgrupp           varchar(50),
+   ForsakringstagareOrgnr varchar(12),
+   Forsakringstagartyp    varchar(10),
+   ForsakradPnr           varchar(12),
+   Kostnadsstalle         varchar(10),
+   Kostnadsbarare         varchar(10),
+   Mottagartyp            varchar(20),
+   Provision              decimal(18, 4));
+
+insert into tmp_Provision_2018
+  select case
+           when right(p.Period, 2) in ('01', '02', '03') then 'Q1'
+           when right(p.Period, 2) in ('04', '05', '06') then 'Q2'
+           when right(p.Period, 2) in ('07', '08', '09') then 'Q3'
+           when right(p.Period, 2) in ('10', '11', '12') then 'Q4'
+         end,
+         p.Period,
+         p.ForsakringsbolagID,
+         p.Fnr,
+         case
+           when Provisionstyp = 'Kapitalersättning'   then 'Kapitalersättning'
+           when Provisionstyp = 'Premieersättning'    then 'Premieersättning'
+           when Provisionstyp = 'Provision'           then 'Premieersättning'
+           when Provisionstyp = 'Korrigeringar'       then 'Premieersättning'
+           when Provisionstyp = 'Manuell transaktion' then 'Premieersättning'
+           when Provisionstyp = 'Konverteringsavgift' then 'Premieersättning'
+           when Provisionstyp = 'Engångspremie'       then 'Engångspremie'
+           when Provisionstyp = 'Up-front'            then 'Up-front'
+           when Provisionstyp = 'Styckersättning'     then 'Styckersättning'
+           when Provisionstyp = 'Annullation'         then 'Annullation'
+           when Provisionstyp = 'Återtag'             then 'Annullation'
+         end,
+         p.Produktgrupp,
+         p.ForsakringstagareOrgnr,
+         null,
+         p.ForsakradPnr,
+         p.Kostnadsstalle,
+         p.Kostnadsbarare,
+         p.Mottagartyp,
+         p.ProvisionBrutto - coalesce(p.Moms, 0) + 0.25 * coalesce(p.Agentavgift, 0)
+  from #period pe, dw.Prov_Provision p
+  where p.Period = pe.Period
+    and p.ForsakringsbolagID in (17, 26, 28, 41, 47, 61, 66, 74)
+    and p.Produktgrupp in ('Tjänstepension', 'Spar', 'Fond', 'Trad', 'Livförsäkring', 'Risk', 'Vårdförsäkring', 'Depå', 'Privat')
+    and p.Fnr is not null
+    and len(p.ForsakringstagareOrgnr) in (10, 12)
+    and right(p.ForsakringstagareOrgnr, 3) != '+11'
+    and isnumeric(p.ForsakringstagareOrgnr) = 1
+    and case
+          when len(p.ForsakringstagareOrgnr) = 10 then dbo.checkok(p.ForsakringstagareOrgnr)
+          else dbo.checkok(right(p.ForsakringstagareOrgnr, 10))
+        end = 0
+    and p.Mottagartyp != 'Kundföretag';
+
+
+-- Byt från provisionssystemet försäkringsbolags-id:n till PMLs id:n
+update tmp_Provision_2018
+set ForsakringsbolagID = m.id_pml
+from dw.Prov_Mappning_FB m
+where m.id_prov = ForsakringsbolagID;
+
+
+-- Snygga till försäkringstagarens orgnr/pnr
+update tmp_Provision_2018
+set ForsakringstagareOrgnr = case when left(ForsakringstagareOrgnr, 2) > '10' then '19' else '20' end + ForsakringstagareOrgnr
+where len(ForsakringstagareOrgnr) = 10
+  and substring(ForsakringstagareOrgnr, 3, 2) <= '12';
+
+update tmp_Provision_2018
+set ForsakringstagareOrgnr = right(ForsakringstagareOrgnr, 10)
+where len(ForsakringstagareOrgnr) = 12
+  and substring(ForsakringstagareOrgnr, 5, 2) > '12';
+
+
+-- Tydliggör om det är en företags- eller privatägd försäkring
+update tmp_Provision_2018 set Forsakringstagartyp = 'Företag'
+where len(ForsakringstagareOrgnr) = 10;
+
+update tmp_Provision_2018 set Forsakringstagartyp = 'Privat'
+where len(ForsakringstagareOrgnr) = 12;
+
+
+-- Fixa försäkringsnummer från EuroAccident
+update tmp_Provision_2018
+set ForsakringsNr = left(ForsakringsNr, 3) + right(ForsakringsNr, 3)
+where ForsakringsbolagID = 32
+  and len(ForsakringsNr) = 7
+  and substring(ForsakringsNr, 4, 1) = ' ';
+
+update tmp_Provision_2018
+set ForsakringsNr = left(ForsakringsNr, 1) + substring(ForsakringsNr, 3, 3) + right(ForsakringsNr, 3)
+where ForsakringsbolagID = 32
+  and len(ForsakringsNr) = 9
+  and substring(ForsakringsNr, 2, 1) = ' ';
+
+
+-- Skapa index för ökad prestanda
+create index idx_provisionstyp on tmp_Provision_2018 (Provisionstyp);
+create index idx_produktgrupp  on tmp_Provision_2018 (Produktgrupp);
+create index idx_orgnr         on tmp_Provision_2018 (ForsakringstagareOrgnr);
+create index idx_pnr           on tmp_Provision_2018 (ForsakradPnr);
+create index idx_fnr           on tmp_Provision_2018 (ForsakringsNr);
+
+
+
+----------------------
+-- Sammanställ premier
+----------------------
+
+-- Skapa tabell för alla försäkringar
+drop table tmp_Forsakring_2018;
+
+create table tmp_Forsakring_2018
+  (Kvartal            char(2),
+   ForsakringsbolagID int,
+   ForsakringsNr      varchar(30),
+   Pnr                varchar(12),
+   Produkttyp         varchar(20),
+   Affarstyp          varchar(20),
+   Premie             decimal(18, 4),
+   Tjp                char(1),
+   Lvxl               char(1),
+   Spar               char(1),
+   SenasteDatum       char(10));
+
+insert into tmp_Forsakring_2018
+  (Kvartal,
+   ForsakringsbolagID,
+   ForsakringsNr,
+   Pnr,
+   Produkttyp,
+   Affarstyp,
+   Tjp,
+   Lvxl,
+   Spar,
+   SenasteDatum)
+  select 'Q1',
+         f.ForsakringsbolagID,
+         f.ForsakringsNr,
+         f.ForsakradNr,
+         f.Produkttyp,
+         f.Affarstyp,
+         f.Tjanstepension,
+         case when f.Produkttyp = 'Löneväxling' then 'j' else 'n' end,
+         f.Spar,
+         f.Datum
+  from dim.Forsakring f
+  where f.Aktuell = 'j'
+    and not exists (select 1 from #temp t where t.ForsakringstagareNr = f.ForsakringstagareNr);
+         
+--> 1 949 592
+
+
+-- Skapa en kopia per kvartal 
+-- TODO: Skriv om 
+
+  
+-- Lägg in premie
+update tmp_Forsakring_2018
+set Premie  = (select sum(p.Premie) from dim.Forsakring f, fakt.Premie p
+               where f.ForsakringsbolagID = tmp_Forsakring_2018.ForsakringsbolagID
+                 and f.Forsakringsnr      = tmp_Forsakring_2018.Forsakringsnr
+                 and f.ForsakradNr        = tmp_Forsakring_2018.Pnr
+                 and p.ForsakringID = f.ForsakringID
+                 and p.Datum between '2018-01-01' and '2018-03-31')
+where Kvartal = 'Q1'
+  and Premie is null;
+
+create index idx_forsakringsnr on tmp_Forsakring_2018 (ForsakringsNr);
+create index idx_affarstyp     on tmp_Forsakring_2018 (Affarstyp);
+
+
+
+------------------------------------------
+-- Rätta problem med Skandias produkttyper
+------------------------------------------
+
+-- Ändra produkttyp på provisioner från Skadia av typen engångspremie till premierersättning om försäkringen är en utpekad tjänstepension inom SK eller Maxplan PC
+update tmp_Provision_2018
+set Provisionstyp = 'Premieersättning'
+from tmp_Forsakring_2018 f
+where f.ForsakringsbolagID = tmp_Provision_2018.ForsakringsbolagID
+  and f.ForsakringsNr = tmp_Provision_2018.ForsakringsNr
+  and f.Kvartal = tmp_Provision_2018.Kvartal
+  and tmp_Provision_2018.Provisionstyp = 'Engångspremie'
+  and tmp_Provision_2018.ForsakringsbolagID = 67
+  and f.Affarstyp in ('SK', 'Maxplan PC')
+  and f.Premie > 0
+  and (f.Tjp = 'j' or f.Lvxl = 'j');
+
+--> 742
+
+
+
+------------------------
+-- Leverans till Ekonomi
+------------------------
+
+-- Presentera provision per provisionstyp och affärstyp
+select p.Provisionstyp, 
+       sum(case when f.Affarstyp = 'SK'          then Provision else 0 end) as 'SK',
+       sum(case when f.Affarstyp = 'Maxplan PC'  then Provision else 0 end) as 'Maxplan PC',
+       sum(case when f.Affarstyp = 'Maxplan'     then Provision else 0 end) as 'Maxplan',
+       sum(case when f.Affarstyp is null         then Provision else 0 end) as 'Ordinarie affär',
+       sum(Provision) as 'Totalt'
+from tmp_Provision_2018 p, tmp_Forsakring_2018 f
+where f.ForsakringsbolagID = p.ForsakringsbolagID
+  and f.ForsakringsNr = p.ForsakringsNr
+  and p.Kvartal = 'Q1'
+  and f.Kvartal = 'Q1'
+  and f.Spar = 'j'
+group by p.Provisionstyp
+order by 2 desc;
+
+
+-- Presentera provision och premie per affärstyp
+select f.Affarstyp,
+       sum(Provision),
+       (select sum(Premie) from tmp_Forsakring_2018 f1
+        where (f1.Affarstyp = f.Affarstyp or
+               (f1.Affarstyp is null and f.Affarstyp is null))
+          and Kvartal = 'Q1'
+          and exists (select 1 from tmp_Provision_2018 p1
+                      where p1.ForsakringsbolagID = f1.ForsakringsbolagID
+                        and p1.ForsakringsNr = f1.ForsakringsNr
+                        and p1.Kvartal = 'Q1'
+                        and p1.Provisionstyp != 'Kapitalersättning')
+          and f1.Spar = 'j') as Premie
+from tmp_Provision_2018 p, 
+     tmp_Forsakring_2018 f
+where f.ForsakringsbolagID = p.ForsakringsbolagID
+  and f.ForsakringsNr = p.ForsakringsNr
+  and p.Kvartal = 'Q1'
+  and f.Kvartal = 'Q1'
+  and p.Provisionstyp != 'Kapitalersättning'
+  and f.Spar = 'j'
+group by f.Affarstyp;
+
+
+
+
+
