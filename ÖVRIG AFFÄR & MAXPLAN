@@ -197,3 +197,49 @@ SELECT kf.Orgnr, COUNT(f.KundID) AS 'Antal Ordinarie/Maxplan', SUM(f.Varde) AS '
   EXISTS (SELECT 1 FROM dw.Arvode ar WHERE ar.Period BETWEEN '2017-09' AND '2018-10' AND ar.Orgnr = kf.Orgnr))
   GROUP BY kf.Orgnr
   ORDER BY kf.Orgnr
+
+
+================================================================================================
+
+
+SELECT 
+asd1.Orgnr,
+asd2.Affärstyp,
+asd2.Skattekategori,
+asd2.Försäkringsbolag,
+asd2.Premie,
+asd2.Värde,
+asd2.Trad,
+asd2.Fond,
+asd2.Navigera,
+asd2.Sjuk
+FROM
+(SELECT DISTINCT kf.Orgnr
+FROM dw.Kundforetag kf
+WHERE kf.Aktiv = 'j'
+-- Plocka bort IBM, som inte längre är vår kund
+AND kf.Orgnr != '5560266883'
+-- Vi bör ha fått någon form av ersättning från företaget
+AND (EXISTS (select 1 from dw.Prov_Provision p where p.Period  BETWEEN '2017-09' AND '2018-10' AND p.ForsakringstagareOrgnr = kf.Orgnr AND BolagID = '1')
+OR EXISTS (select 1 from dw.Arvode ar where ar.Period BETWEEN '2017-09' and '2018-10' AND ar.Orgnr = kf.Orgnr))) asd1
+
+JOIN
+
+(SELECT 
+f.ForsakringstagareNr	AS 'Orgnr',
+f.Affarstyp				AS 'Affärstyp',
+f.Skattekategori		AS 'Skattekategori',
+fb.Namn					AS 'Försäkringsbolag',
+f.Premie				AS 'Premie',
+f.Varde					AS 'Värde',
+f.Trad					AS 'Trad',
+f.Fond					AS 'Fond',
+f.Navigera				AS 'Navigera',
+f.Sjuk					AS 'Sjuk'
+FROM dw.Forsakring f
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+WHERE f.Affarstyp = 'Maxplan'
+OR f.Affarstyp IS NULL) asd2
+
+ON asd1.Orgnr = asd2.Orgnr
+ORDER BY asd1.Orgnr
