@@ -1,0 +1,33 @@
+SELECT
+t.TeamID,
+t.Team,
+r.RadgivarID,
+r.Namn,
+f.Pnr,
+f.ForsakringstagarTyp,
+f.Skattekategori,
+fb.Namn,
+f.Datering,
+f.Status,
+f.Premie,
+f.Produkttyp,
+f.Varde,
+f.Trad,
+f.Fond,
+f.Navigera,
+f.Spar,
+f.Aterbetalningsskydd,
+F.Premiebefrielse,
+f.Sjuk,
+f.Invaliditet,
+f.Olycksfall,
+f.Dodsfall,
+f.Sjukvard,
+f.Rehab,
+f.Prehab
+FROM dw.Forsakring f
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+JOIN dw.Kund k ON f.KundID = k.KundID
+JOIN dw.Radgivare r ON k.RadgivarID = r.RadgivarID
+JOIN dw.Team t ON r.TeamID = t.TeamID 
+WHERE f.KundID = '2146141850'
