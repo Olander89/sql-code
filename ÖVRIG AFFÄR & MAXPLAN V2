@@ -1,0 +1,99 @@
+
+-- Inkluderat Sparförsäkringar, Plockat bort alla Orgnr med försäkringar även inom inom Maxplan PC / SK
+
+
+CREATE TABLE #Temp1
+(
+Orgnr CHAR(10),
+Affärstyp CHAR(10),
+Skattekategori CHAR(1),
+Försäkringsbolag VARCHAR(25),
+Premie INT,
+Värde INT,
+Trad INT,
+Fond INT,
+Navigera INT,
+Sjuk CHAR(1)
+)
+
+DROP TABLE #Temp1
+
+INSERT INTO #Temp1 (Orgnr, Affärstyp, Skattekategori, Försäkringsbolag, Premie, Värde, Trad, Fond, Navigera, Sjuk)
+
+SELECT 
+asd1.Orgnr,
+asd2.Affärstyp,
+asd2.Skattekategori,
+asd2.Försäkringsbolag,
+asd2.Premie,
+asd2.Värde,
+asd2.Trad,
+asd2.Fond,
+asd2.Navigera,
+asd2.Sjuk
+FROM
+(SELECT DISTINCT kf.Orgnr
+FROM dw.Kundforetag kf
+WHERE kf.Aktiv = 'j'
+-- Plocka bort IBM
+AND kf.Orgnr != '5560266883'
+-- Kontrollera ersättning
+AND (EXISTS (select 1 from dw.Prov_Provision p where p.Period  BETWEEN '2017-09' AND '2018-10' AND p.ForsakringstagareOrgnr = kf.Orgnr AND BolagID = '1')
+OR EXISTS (select 1 from dw.Arvode ar where ar.Period BETWEEN '2017-09' and '2018-10' AND ar.Orgnr = kf.Orgnr))) asd1
+
+JOIN
+
+(SELECT 
+f.ForsakringstagareNr	AS 'Orgnr',
+f.Affarstyp				AS 'Affärstyp',
+f.Skattekategori		AS 'Skattekategori',
+fb.Namn					AS 'Försäkringsbolag',
+f.Premie				AS 'Premie',
+f.Varde					AS 'Värde',
+f.Trad					AS 'Trad',
+f.Fond					AS 'Fond',
+f.Navigera				AS 'Navigera',
+f.Sjuk					AS 'Sjuk'
+FROM dw.Forsakring f
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+JOIN dw.Kund k ON f.KundID = k.KundID
+JOIN dw.Kundforetag kf ON k.KundforetagID = kf.KundforetagID
+WHERE f.Affarstyp = 'Maxplan'
+OR f.Affarstyp IS NULL
+AND f.Produkttyp NOT IN ('Koll. förmånsbaserad', 'Koll. kompletterande', 'Koll. odefinierad', 'Koll. premiebaserad', 'Privat pension')
+AND f.Status = 'Gällande'
+AND k.Aktiv = 'j'
+AND f.Spar = 'j') asd2
+
+ON asd1.Orgnr = asd2.Orgnr
+ORDER BY asd1.Orgnr
+
+SELECT DISTINCT f.Affarstyp
+FROM dw.Forsakring f
+
+
+SELECT f.Affarstyp, SUM(f.Premie) AS 'Total Premie'
+FROM dw.Forsakring f
+WHERE f.ForsakringstagareNr IN
+(SELECT DISTINCT kf.Orgnr
+FROM dw.Kundforetag kf
+WHERE kf.Aktiv = 'j'
+-- Plocka bort IBM
+AND kf.Orgnr != '5560266883'
+-- Kontrollera ersättning
+AND (EXISTS (select 1 from dw.Prov_Provision p where p.Period  BETWEEN '2017-09' AND '2018-10' AND p.ForsakringstagareOrgnr = kf.Orgnr AND BolagID = '1')
+OR EXISTS (select 1 from dw.Arvode ar where ar.Period BETWEEN '2017-09' and '2018-10' AND ar.Orgnr = kf.Orgnr)))
+AND f.Produkttyp NOT IN ('Koll. förmånsbaserad', 'Koll. kompletterande', 'Koll. odefinierad', 'Koll. premiebaserad', 'Privat pension')
+AND f.Status = 'Gällande'
+GROUP BY f.Affarstyp
+
+
+SELECT * FROM #Temp1 --114.111 Aktiva Sparförsäkringar i OA/Maxplan
+
+WHERE #Temp1.Orgnr NOT IN (SELECT DISTINCT f.ForsakringstagareNr FROM dw.Forsakring f JOIN dw.Kund k ON f.KundID = k.KundID
+							WHERE f.Status = 'Gällande' AND f.Spar = 'j' AND f.Affarstyp IN ('Maxplan PC', 'SK')
+							AND f.Produkttyp NOT IN ('Koll. förmånsbaserad', 'Koll. kompletterande', 'Koll. odefinierad', 'Koll. premiebaserad', 'Privat pension')
+							AND k.Aktiv = 'j' AND f.Premie > '0') --48.400 Aktiva Sparförsäkringar i SK/Maxplan PC med Premie > 0
+
+ORDER BY Orgnr --68.375 Vars Orgnr inte också finns med i SK/Maxplan PC
+
