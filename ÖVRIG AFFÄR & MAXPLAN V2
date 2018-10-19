@@ -1,10 +1,11 @@
 
--- Inkluderat Sparförsäkringar, Plockat bort alla Orgnr med försäkringar även inom inom Maxplan PC / SK
-
+-- 2018-10-18 Inkluderat Sparförsäkringar, Plockat bort alla Orgnr med försäkringar även inom inom Maxplan PC / SK
+-- 2018-10-19 Inkluderat Rådgivare, Påbörjat utsökning för Premietrappa eller Fast premie
 
 CREATE TABLE #Temp1
 (
 Orgnr CHAR(10),
+Rådgivare VARCHAR(50),
 Affärstyp CHAR(10),
 Skattekategori CHAR(1),
 Försäkringsbolag VARCHAR(25),
@@ -18,10 +19,11 @@ Sjuk CHAR(1)
 
 DROP TABLE #Temp1
 
-INSERT INTO #Temp1 (Orgnr, Affärstyp, Skattekategori, Försäkringsbolag, Premie, Värde, Trad, Fond, Navigera, Sjuk)
+INSERT INTO #Temp1 (Orgnr, Rådgivare, Affärstyp, Skattekategori, Försäkringsbolag, Premie, Värde, Trad, Fond, Navigera, Sjuk)
 
 SELECT 
 asd1.Orgnr,
+asd2.Rådgivare,
 asd2.Affärstyp,
 asd2.Skattekategori,
 asd2.Försäkringsbolag,
@@ -45,6 +47,7 @@ JOIN
 
 (SELECT 
 f.ForsakringstagareNr	AS 'Orgnr',
+r.Namn					AS 'Rådgivare',
 f.Affarstyp				AS 'Affärstyp',
 f.Skattekategori		AS 'Skattekategori',
 fb.Namn					AS 'Försäkringsbolag',
@@ -58,6 +61,7 @@ FROM dw.Forsakring f
 JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
 JOIN dw.Kund k ON f.KundID = k.KundID
 JOIN dw.Kundforetag kf ON k.KundforetagID = kf.KundforetagID
+LEFT JOIN dw.Radgivare r ON k.RadgivarID = r.RadgivarID
 WHERE f.Affarstyp = 'Maxplan'
 OR f.Affarstyp IS NULL
 AND f.Produkttyp NOT IN ('Koll. förmånsbaserad', 'Koll. kompletterande', 'Koll. odefinierad', 'Koll. premiebaserad', 'Privat pension')
@@ -88,12 +92,28 @@ AND f.Status = 'Gällande'
 GROUP BY f.Affarstyp
 
 
-SELECT * FROM #Temp1 --114.111 Aktiva Sparförsäkringar i OA/Maxplan
+SELECT * FROM #Temp1 --114.151 Aktiva Sparförsäkringar i OA/Maxplan
 
 WHERE #Temp1.Orgnr NOT IN (SELECT DISTINCT f.ForsakringstagareNr FROM dw.Forsakring f JOIN dw.Kund k ON f.KundID = k.KundID
 							WHERE f.Status = 'Gällande' AND f.Spar = 'j' AND f.Affarstyp IN ('Maxplan PC', 'SK')
 							AND f.Produkttyp NOT IN ('Koll. förmånsbaserad', 'Koll. kompletterande', 'Koll. odefinierad', 'Koll. premiebaserad', 'Privat pension')
 							AND k.Aktiv = 'j' AND f.Premie > '0') --48.400 Aktiva Sparförsäkringar i SK/Maxplan PC med Premie > 0
 
-ORDER BY Orgnr --68.375 Vars Orgnr inte också finns med i SK/Maxplan PC
+ORDER BY Orgnr --68.440 Vars Orgnr inte också finns med i SK/Maxplan PC
+
+
+
+
+
+--Början på utsökning för Fast Premie eller Premietrappa
+SELECT TOP(1000) k.KundID, k.KundforetagID, k.RadgivarID, k.AdministratorID, k.PlaceringsradgivarID, k.Pnr, k.Namn, k.Fornamn, k.Efternamn, k.Adress, k.Postnr, k.Ort, l.Lon,
+CASE WHEN pp.xForeta = k.KundforetagID and pp.Plantyp in (6, 7, 10) THEN 'j' ELSE 'n' END AS 'Procentplan'
+FROM dw.Kund k
+JOIN stage.Pml_loner l ON k.KundID = l.xAnstal
+LEFT OUTER JOIN stage.pml_Premieplaner pp ON pp.xID = l.xPremie
+WHERE k.Aktiv = 'j'
+AND l.Datum = (SELECT MAX(datum) FROM stage.pml_Loner l2 WHERE l2.xAnstal = l.xAnstal)
+
+SELECT TOP(1000) * 
+FROM PML_PROD.pml.dbo.dw_vy_Premieplaner
 
