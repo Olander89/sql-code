@@ -1,9 +1,12 @@
 
 -- 2018-10-18 Inkluderat Sparförsäkringar, Plockat bort alla Orgnr med försäkringar även inom inom Maxplan PC / SK
 -- 2018-10-19 Inkluderat Rådgivare, Påbörjat utsökning för Premietrappa eller Fast premie
+-- 2018-10-24 Inkluderad PremieTrappa och formaterat den samt Sjuk
 
 CREATE TABLE #Temp1
 (
+KundID VARCHAR(25),
+KundforetagID VARCHAR(25),
 Orgnr CHAR(10),
 Rådgivare VARCHAR(50),
 Affärstyp CHAR(10),
@@ -14,14 +17,17 @@ Värde INT,
 Trad INT,
 Fond INT,
 Navigera INT,
-Sjuk CHAR(1)
+Sjuk CHAR(1),
+Trappa CHAR(1)
 )
 
 DROP TABLE #Temp1
 
-INSERT INTO #Temp1 (Orgnr, Rådgivare, Affärstyp, Skattekategori, Försäkringsbolag, Premie, Värde, Trad, Fond, Navigera, Sjuk)
+INSERT INTO #Temp1 (KundID, KundforetagID, Orgnr, Rådgivare, Affärstyp, Skattekategori, Försäkringsbolag, Premie, Värde, Trad, Fond, Navigera, Sjuk)
 
 SELECT 
+asd2.KundID,
+asd2.KundforetagID,
 asd1.Orgnr,
 asd2.Rådgivare,
 asd2.Affärstyp,
@@ -45,7 +51,9 @@ OR EXISTS (select 1 from dw.Arvode ar where ar.Period BETWEEN '2017-09' and '201
 
 JOIN
 
-(SELECT 
+(SELECT
+f.KundID				AS 'KundID',
+kf.KundforetagID		AS 'KundforetagID',
 f.ForsakringstagareNr	AS 'Orgnr',
 r.Namn					AS 'Rådgivare',
 f.Affarstyp				AS 'Affärstyp',
@@ -92,7 +100,17 @@ AND f.Status = 'Gällande'
 GROUP BY f.Affarstyp
 
 
-SELECT * FROM #Temp1 --114.151 Aktiva Sparförsäkringar i OA/Maxplan
+SELECT
+Orgnr, Rådgivare, Affärstyp, Skattekategori, Försäkringsbolag, Premie, Värde, Trad, Fond, Navigera,
+CASE WHEN Sjuk = 'n' THEN  ''
+WHEN Sjuk = 'j' THEN 'j' 
+WHEN Sjuk IS NULL THEN '' END AS Sjuk,
+CASE WHEN Trappa = 'n' THEN ''
+WHEN Trappa = 'j' THEN 'j'
+WHEN Trappa IS NULL THEN ''
+END AS Trappa
+
+FROM #Temp1  --114.314 Aktiva Sparförsäkringar i OA/Maxplan
 
 WHERE #Temp1.Orgnr NOT IN (SELECT DISTINCT f.ForsakringstagareNr FROM dw.Forsakring f JOIN dw.Kund k ON f.KundID = k.KundID
 							WHERE f.Status = 'Gällande' AND f.Spar = 'j' AND f.Affarstyp IN ('Maxplan PC', 'SK')
@@ -117,3 +135,9 @@ AND l.Datum = (SELECT MAX(datum) FROM stage.pml_Loner l2 WHERE l2.xAnstal = l.xA
 SELECT TOP(1000) * 
 FROM PML_PROD.pml.dbo.dw_vy_Premieplaner
 
+update #temp1
+set Trappa = case when pp.xForeta = #temp1.KundforetagID and pp.Plantyp in (6, 7, 10) then 'j' else 'n' end
+from stage.pml_Loner l
+left outer join stage.pml_Premieplaner pp on pp.xID = l.xPremie
+where l.xAnstal = dw.#temp1.KundID
+  and l.Datum = (select max(datum) from stage.pml_Loner l2 where l2.xAnstal = l.xAnstal)
