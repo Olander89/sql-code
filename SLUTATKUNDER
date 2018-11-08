@@ -1,4 +1,3 @@
-
 SELECT DISTINCT
 	km.SenasteMote,
 	r.Team, r.Namn AS 'Rådgivare', r.RadgivarID, k.PlaceringsradgivarID, k.Pnr, k.Namn AS 'Kund', k.Adress,
@@ -10,15 +9,20 @@ LEFT JOIN dw.Radgivare r On k.RadgivarID = r.RadgivarID
 LEFT JOIN dw.Kundforetag kf ON k.KundforetagID = kf.KundforetagID
 LEFT JOIN dw.KundMote km ON k.KundID = km.KundID
 LEFT JOIN dw.forsakring f ON k.KundID = f.KundID
-WHERE kf.Namn LIKE '%slutat%' 
+WHERE kf.Namn LIKE '%slutat%'
+--AND km.SenasteMote > DateAdd(yy, -3, GetDate())
 GROUP BY km.SenasteMote,
 	r.Team, r.Namn, r.RadgivarID, k.PlaceringsradgivarID, k.Pnr, k.Namn, kf.Namn, k.Adress,
 	k.Postnr, k.Ort, k.Hemtelefon, k.Arbetstelefon,
 	k.Mobiltelefon, k.Epostadress, k.Alder 
 
+	
 	SELECT t.SenasteMote, t.team AS 'Team', t.Rådgivare,
 	(SELECT r.Namn FROm dw.Radgivare r WHERE t.PlaceringsradgivarID = r.RadgivarID) AS 'Placeringsrådgivare',
 	t.Pnr, t.Kund, UPPER(LEFT(t.Adress,1))+LOWER(SUBSTRING(t.Adress,2,LEN(t.Adress))) AS 'Adress',
 	t.Postnr, UPPER(LEFT(t.Ort,1))+LOWER(SUBSTRING(t.Ort,2,LEN(t.Ort))) AS 'Ort', t.Hemtelefon,
 	t.Arbetstelefon, t.Mobiltelefon, t.Epostadress, t.Alder, t.Varde, t.Trad, t.Fond FROM #temp t
 	ORDER BY Varde DESC
+
+
+DROP TABLE #temp
