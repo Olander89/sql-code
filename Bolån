@@ -1,0 +1,36 @@
+--VY i DBVisualizer Linda
+
+CREATE VIEW dw_vy_IGFinancialItemHousing (xID, type, createdDate, ssn, MARKET_VALUE, SHARE_PERCENT, DEBT, DEBT_SHARE_PERCENT, MONTHLY_COST) AS
+SELECT
+ fi.xID,
+ fi.type,
+ fi.createdDate,
+LEFT(fi.ssn, 8) + RIGHT(fi.ssn, 4) AS 'ssn',
+ MAX(CASE WHEN fid.dataType = 'MARKET_VALUE' THEN fid.value END) AS 'MARKET_VALUE',
+  MAX(CASE WHEN fid.dataType = 'SHARE' THEN fid.value END) AS 'SHARE_PERCENT',
+   MAX(CASE WHEN fid.dataType = 'DEBT' THEN fid.value END) AS 'DEBT',
+    MAX(CASE WHEN fid.dataType = 'DEBT_SHARE' THEN fid.value END) AS 'DEBT_SHARE_PERCENT',
+     MAX(CASE WHEN fid.dataType = 'MONTHLY_COST' THEN fid.value END) AS 'MONTHLY_COST'   
+FROM customer.IGFinancialItem fi
+JOIN customer.IGFinancialItemData fid ON fi.xID = fid.xFinancialItem
+WHERE fi.type = 'MAIN_HOUSING_PROPERTY'
+AND CreatedDate > '2017-01-01'
+GROUP BY fi.xID, fi.type, fi.createdDate, fi.ssn
+
+--Query SQL Manager
+
+SELECT
+type,
+createdDate,
+ssn,
+MARKET_VALUE,
+SHARE_PERCENT,
+DEBT,
+DEBT_SHARE_PERCENT,
+MONTHLY_COST
+FROM LINDA_PROD.Linda.dbo.dw_vy_IGFinancialItemHousing
+WHERE ssn IN(SELECT DISTINCT Pnr
+FROM [Datawarehouse].[dw].[Forsakring]
+WHERE ForsakringsbolagID = '67' --Skandia
+AND Tjanstepension = 'j')
+ORDER BY createdDate DESC
