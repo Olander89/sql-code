@@ -34,3 +34,25 @@ FROM [Datawarehouse].[dw].[Forsakring]
 WHERE ForsakringsbolagID = '67' --Skandia
 AND Tjanstepension = 'j')
 ORDER BY createdDate DESC
+
+-- Med Rådgivare
+
+SELECT
+r.Namn,
+r.Team,
+fi.type,
+fi.createdDate,
+fi.ssn,
+fi.MARKET_VALUE,
+fi.SHARE_PERCENT,
+fi.DEBT,
+fi.DEBT_SHARE_PERCENT,
+fi.MONTHLY_COST
+FROM LINDA_PROD.Linda.dbo.dw_vy_IGFinancialItemHousing fi
+LEFT JOIN dw.Kund k ON fi.ssn = k.Pnr
+LEFT JOIN dw.Radgivare r ON k.RadgivarID = r.RadgivarID
+WHERE ssn IN(SELECT DISTINCT Pnr
+FROM [Datawarehouse].[dw].[Forsakring]
+WHERE ForsakringsbolagID = '67' --Skandia
+AND Tjanstepension = 'j')
+ORDER BY fi.createdDate DESC
