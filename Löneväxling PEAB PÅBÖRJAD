@@ -1,0 +1,13 @@
+  SELECT
+  k.Namn,
+  k.Pnr,
+  kf.Namn,
+  kf.Orgnr,
+  l.Forsakringsnr,
+  l.StartDatum,
+  l.Belopp
+  FROM dw.Kund k
+  JOIN dw.Kundforetag kf ON k.KundforetagID = kf.KundforetagID
+  JOIN dw.Lonevaxling l ON k.KundID = l.KundID
+  WHERE k.KundforetagID IN
+ (SELECT DISTINCT Kf.KundforetagID FROM dw.Kundforetag kf WHERE kf.Koncern LIKE '%PEAB%')
