@@ -1,0 +1,25 @@
+SELECT
+fb.Namn, COUNT(fb.ForsakringsbolagID) AS Antal, SUM(f.Varde) AS Varde, SUM(f.Trad) AS Trad, SUM(f.Fond) AS Fond
+FROM dw.Forsakring f
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+WHERE f.Datering > '2018-01-01'
+AND f.ForsakringstagarTyp = 'Privat'
+AND f.Skattekategori = 'K'
+AND f.Status = 'Gällande'
+GROUP BY fb.Namn
+ORDER BY Antal DESC
+
+--11.759 st
+
+SELECT
+fb.Namn, COUNT(fb.ForsakringsbolagID) AS Antal, SUM(f.Varde) AS Varde, SUM(f.Trad) AS Trad, SUM(f.Fond) AS Fond
+FROM dw.Forsakring f
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+WHERE f.Datering BETWEEN '2017-01-01' AND '2017-12-31'
+AND f.ForsakringstagarTyp = 'Privat'
+AND f.Skattekategori = 'K'
+AND f.Status = 'Gällande'
+GROUP BY fb.Namn
+ORDER BY Antal DESC
+
+--14.975 st
