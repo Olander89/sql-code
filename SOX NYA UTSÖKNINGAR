@@ -1,0 +1,59 @@
+DECLARE @Fran_Datum  char(10)	= '2017-10-01'
+DECLARE @Till_Datum  char(10)	= '2018-09-30'
+
+create table sox.dki_foregaende
+  (TeamID        int,
+   KundforetagID int,
+   Orgnr         char(10),
+   Koncern       varchar(30),
+   KundID        int,
+   Period        char(7),
+   Datum         char(10),
+   Fraga1        decimal(12, 4),
+   AntalSvar1    decimal(12, 4),
+   Fraga2        decimal(12, 4),
+   AntalSvar2    decimal(12, 4),
+   Fraga3        decimal(12, 4),
+   AntalSvar3    decimal(12, 4),
+   Fraga4        decimal(12, 4),
+   AntalSvar4    decimal(12, 4),
+   Fraga5        decimal(12, 4),
+   AntalSvar5    decimal(12, 4),
+   Fraga6        decimal(12, 4),
+   AntalSvar6    decimal(12, 4),
+   Fraga7        decimal(12, 4),
+   AntalSvar7    decimal(12, 4));
+
+
+insert into sox.dki_foregaende
+
+  select kf.TeamID,
+         kf.KundforetagID,
+         kf.Orgnr,
+         kf.Koncern,
+         m.KundID,
+         m.Period,
+         m.Datum,
+         case when m.Fraga1 is null then 0 else m.Fraga1 end,
+         case when m.Fraga1 is null then 0 else 1 end,
+         case when m.Fraga2 is null then 0 else m.Fraga2 end,
+         case when m.Fraga2 is null then 0 else 1 end,
+         case when m.Fraga3 is null then 0 else m.Fraga3 end,
+         case when m.Fraga3 is null then 0 else 1 end,
+         case when m.Fraga4 is null then 0 else m.Fraga4 end,
+         case when m.Fraga4 is null then 0 else 1 end,
+         case when m.Fraga5 is null then 0 else m.Fraga5 end,
+         case when m.Fraga5 is null then 0 else 1 end,
+         case when m.Fraga6 is null then 0 else m.Fraga6 end,
+         case when m.Fraga6 is null then 0 else 1 end,
+         case when m.Fraga7 is null then 0 else m.Fraga7 end,
+         case when m.Fraga7 is null then 0 else 1 end
+  from sox.kundforetag kf, dw.Mote m
+  where m.KundforetagID = kf.KundforetagID
+    and m.Datum >= DATEADD(YEAR, -1, @Fran_Datum)	--2017-10-01 minus 1 år
+    and m.Datum < DATEADD(YEAR, -1, @Till_Datum)  --2018-09-30 minus 1 år
+    and m.AntalSvar > 0;
+    
+create index idx_teamid  on sox.dki_foregaende (TeamID);
+create index idx_orgnr   on sox.dki_foregaende (Orgnr);
+create index idx_koncern on sox.dki_foregaende (Koncern);
