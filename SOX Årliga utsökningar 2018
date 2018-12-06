@@ -1,0 +1,116 @@
+
+--CGI / Team Lindberg
+
+select f.koncern, SUM(f.Premie)
+from sox.Forsakring f
+WHERE f.koncern = 'CGI'
+GROUP BY f.Koncern
+
+-- Lista alla försäkringar
+select * from sox.forsakring f
+where exists (select 1 from sox.orgnr o
+              where o.Orgnr = f.Orgnr
+                and o.Koncern = 'CGI');
+
+--> 1589 (Dec 2018)
+
+
+-- Kolla vilka av dessa som har genererat provision
+select * from sox.forsakring f
+where exists (select 1 from sox.orgnr o
+              where o.Orgnr = f.Orgnr
+                and o.Koncern = 'CGI'
+				and o.TeamID = 62)
+  and exists (select 1 from sox.provision p
+              where p.Forsakringsbolag = f.Forsakringsbolag
+                and p.ForsakringsNr = f.ForsakringsNr);
+
+--> 1162 (Dec 2018)
+
+
+-- Skapa urvalslista
+select f.Forsakringsbolag,
+       f.ForsakringsNr,
+       f.Affarstyp,
+       f.Produkttyp,
+       f.Tjp,
+       f.Lvxl,
+       f.Sjukvard,
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Spar')            then 'j' else 'n' end as 'OLD',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Premiebefrielse') then 'j' else 'n' end as 'PBF',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Sjuk')            then 'j' else 'n' end as 'SJU',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Sjukvård')        then 'j' else 'n' end as 'SJV',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Dödsfall')        then 'j' else 'n' end as 'EFT',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Invaliditet')     then 'j' else 'n' end as 'INV',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Olycksfall')      then 'j' else 'n' end as 'OLY',
+	   f.Premie
+from sox.forsakring f
+where exists (select 1 from sox.orgnr o
+              where o.Orgnr = f.Orgnr
+                and o.Koncern = 'CGI'
+				and o.TeamID = 62)
+  and exists (select 1 from sox.provision p
+              where p.Forsakringsbolag = f.Forsakringsbolag
+                and p.ForsakringsNr = f.ForsakringsNr)
+order by 1, 15 DESC;
+
+--> 1162 (Dec 2018)
+
+
+
+-- Bombardier / Team Lidenklint
+
+select f.koncern, SUM(f.Premie)
+from sox.Forsakring f
+WHERE f.koncern = 'Bombardier'
+GROUP BY f.Koncern
+
+-- Lista alla försäkringar
+select * from sox.forsakring f
+where exists (select 1 from sox.orgnr o
+              where o.Orgnr = f.Orgnr
+                and o.Koncern = 'Bombardier');
+
+--> 686 (Dec 2018)
+
+
+-- Kolla vilka av dessa som har genererat provision
+select * from sox.forsakring f
+where exists (select 1 from sox.orgnr o
+              where o.Orgnr = f.Orgnr
+                and o.Koncern = 'Bombardier'
+				and o.TeamID = 136)
+  and exists (select 1 from sox.provision p
+              where p.Forsakringsbolag = f.Forsakringsbolag
+                and p.ForsakringsNr = f.ForsakringsNr);
+
+--> 579 (Dec 2018)
+
+
+-- Skapa urvalslista
+select f.Forsakringsbolag,
+       f.ForsakringsNr,
+       f.Affarstyp,
+       f.Produkttyp,
+       f.Tjp,
+       f.Lvxl,
+       f.Sjukvard,
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Spar')            then 'j' else 'n' end as 'OLD',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Premiebefrielse') then 'j' else 'n' end as 'PBF',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Sjuk')            then 'j' else 'n' end as 'SJU',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Sjukvård')        then 'j' else 'n' end as 'SJV',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Dödsfall')        then 'j' else 'n' end as 'EFT',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Invaliditet')     then 'j' else 'n' end as 'INV',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Olycksfall')      then 'j' else 'n' end as 'OLY',
+	   f.Premie
+from sox.forsakring f
+where exists (select 1 from sox.orgnr o
+              where o.Orgnr = f.Orgnr
+                and o.Koncern = 'Bombardier'
+				and o.TeamID = 136)
+  and exists (select 1 from sox.provision p
+              where p.Forsakringsbolag = f.Forsakringsbolag
+                and p.ForsakringsNr = f.ForsakringsNr)
+order by 1, 15 DESC;
+
+--> 579 (Dec 2018)
