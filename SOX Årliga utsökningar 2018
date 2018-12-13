@@ -172,32 +172,53 @@ where exists (select 1 from sox.orgnr o
 -- ÅrsIntäkt och premier för två månader
 ----------------------------------------------------------------------------------
 				
-SELECT sub2.Foretag, sub2.Orgnr, sub2.Forsakringsbolag, sub2.ForsakringsNr, sub2.Affarstyp, sub2.Produkttyp, sub2.Tjp, sub2.Lvxl, sub2.Sjukvard, sub2.Intakt,
+SELECT
+sub2.Foretag,
+sub2.Orgnr,
+sub2.Forsakringsbolag,
+sub2.ForsakringsNr,
+sub2.Affarstyp,
+sub2.Produkttyp,
+sub2.Tjp,
+sub2.Lvxl,
+sub2.Sjukvard,
+sub2.Intakt,
 MAX(sub2.PremieApril) AS 'PremieApril', MAX(sub2.PremieAugusti) AS 'PremieAugusti'
-FROM (SELECT sub.Foretag, sub.Orgnr, sub.Forsakringsbolag, sub.ForsakringsNr, sub.Affarstyp, sub.Produkttyp, sub.Tjp, sub.Lvxl, sub.Sjukvard, sub.Intakt,
-CASE WHEN RowRank = '1' AND Datum LIKE '%2018-04%' THEN sub.Premie END AS 'PremieApril',
-CASE WHEN RowRank = '1' AND Datum LIKE '%2018-08%' THEN sub.Premie END AS 'PremieAugusti'
-FROM (select o.Foretag,
-       o.Orgnr,
-       f.Forsakringsbolag,
-       f.ForsakringsNr,
-       f.Affarstyp,
-       f.Produkttyp,
-       f.Tjp,
-       f.Lvxl,
-       f.Sjukvard,
-	   o.Intakt,
-	   hk.Premie,
-	   hk.Datum AS 'Datum',
-	   ROW_NUMBER() OVER (PARTITION BY f.ForsakringsNr, Month(Datum) ORDER BY Datum DESC) AS 'RowRank'
-from sox.forsakring f
-LEFT JOIN dw.Hist_Kapital hk ON f.ForsakringsNr = hk.ForsakringsNr
-LEFT JOIN sox.orgnr o ON f.Orgnr = o.Orgnr
-where exists (select 1 from sox.provision p
-              where p.Forsakringsbolag = f.Forsakringsbolag
-                and p.ForsakringsNr = f.ForsakringsNr)
-				AND Datum > '2018-01-01') sub) sub2
-				WHERE Affarstyp = 'SK'
-				OR Affarstyp = 'Maxplan PC'
-				GROUP BY sub2.Foretag, sub2.Orgnr, sub2.Forsakringsbolag, sub2.ForsakringsNr, sub2.Affarstyp, sub2.Produkttyp, sub2.Tjp, sub2.Lvxl, sub2.Sjukvard, sub2.Intakt
+FROM (SELECT
+		sub.Foretag,
+		sub.Orgnr,
+		sub.Forsakringsbolag,
+		sub.ForsakringsNr,
+		sub.Affarstyp,
+		sub.Produkttyp,
+		sub.Tjp,
+		sub.Lvxl,
+		sub.Sjukvard,
+		sub.Intakt,
+		CASE WHEN RowRank = '1' AND Datum LIKE '%2018-04%' THEN sub.Premie END AS 'PremieApril',
+		CASE WHEN RowRank = '1' AND Datum LIKE '%2018-08%' THEN sub.Premie END AS 'PremieAugusti'
+		FROM (SELECT
+				o.Foretag,
+				o.Orgnr,
+				f.Forsakringsbolag,
+				f.ForsakringsNr,
+				f.Affarstyp,
+				f.Produkttyp,
+				f.Tjp,
+				f.Lvxl,
+				f.Sjukvard,
+				o.Intakt,
+				hk.Premie,
+				hk.Datum AS 'Datum',
+				ROW_NUMBER() OVER (PARTITION BY f.ForsakringsNr, Month(Datum) ORDER BY Datum DESC) AS 'RowRank'
+				FROM sox.forsakring f
+				LEFT JOIN dw.Hist_Kapital hk ON f.ForsakringsNr = hk.ForsakringsNr
+				LEFT JOIN sox.orgnr o ON f.Orgnr = o.Orgnr
+				WHERE EXISTS (SELECT 1 FROM sox.provision p
+								WHERE p.Forsakringsbolag = f.Forsakringsbolag
+									AND p.ForsakringsNr = f.ForsakringsNr)
+									AND Datum > '2018-01-01') sub) sub2
+WHERE Affarstyp = 'SK'
+OR Affarstyp = 'Maxplan PC'
+GROUP BY sub2.Foretag, sub2.Orgnr, sub2.Forsakringsbolag, sub2.ForsakringsNr, sub2.Affarstyp, sub2.Produkttyp, sub2.Tjp, sub2.Lvxl, sub2.Sjukvard, sub2.Intakt
 ORDER BY 10 DESC
