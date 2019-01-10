@@ -1,0 +1,33 @@
+CREATE TABLE sox.innehav
+	(KundforetagID		int,
+	 KundID				int,
+	 KapitalID			varchar(40),
+	 Innehav			varchar(50),
+	 Premieandel		decimal);
+
+INSERT INTO sox.innehav
+	SELECT
+	k.KundforetagID,
+	k.KundID,
+	k.KapitalID,
+	i.Namn,
+	i.Premieandel
+	FROM sox.kapital k
+	JOIN dw.innehav i ON k.KapitalID = i.KapitalID
+	WHERE i.Namn != 'Pågående affär eller öresavrundning'
+
+CREATE INDEX idx_kundforetagid ON sox.innehav (KundforetagID)
+CREATE INDEX idx_kundid ON sox.innehav (KundID)
+
+SELECT * FROM
+(SELECT
+ROW_NUMBER() OVER(PARTITION BY i.KundforetagID ORDER BY i.KundforetagID ASC) AS 'RowNbr',
+i.KundforetagID,
+i.Innehav,
+COUNT(*) AS 'Antal'
+FROM sox.innehav i
+GROUP BY i.KundforetagID, i.Innehav) a
+ORDER BY a.KundforetagID, a.Antal DESC
+
+
+DROP TABLE sox.innehav
