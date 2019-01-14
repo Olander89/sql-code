@@ -31,3 +31,40 @@ ORDER BY a.KundforetagID, a.Antal DESC
 
 
 DROP TABLE sox.innehav
+
+====================================================================================================
+
+-- 2019-01-14
+
+CREATE VIEW [dw].[vy_ag_Innehav]
+  (KoncernID,
+   KundforetagID,
+   Innehav,
+   Antal) AS
+SELECT
+o.KoncernID AS 'KoncernID',
+i.KundforetagID,
+i.Innehav,
+COUNT(*) AS 'Antal'
+FROM sox.innehav i
+JOIN sox.kundforetag kf ON i.KundforetagID = kf.KundforetagID
+JOIN sox.orgnr o ON kf.Orgnr = o.Orgnr
+GROUP BY o.KoncernID, i.KundforetagID, i.Innehav
+
+
+UNION ALL
+
+SELECT
+o.EgetKoncernID AS 'KoncernID',
+i.KundforetagID,
+i.Innehav,
+COUNT(*) AS 'Antal'
+FROM sox.innehav i
+JOIN sox.kundforetag kf ON i.KundforetagID = kf.KundforetagID
+JOIN sox.orgnr o ON kf.Orgnr = o.Orgnr
+WHERE o.EgetKoncernID IS NOT NULL
+GROUP BY o.EgetKoncernID, i.KundforetagID, i.Innehav
+ORDER BY i.KundforetagID, Antal DESC
+
+SELECT * FROM [dw].[vy_ag_Innehav]
+ORDER BY KundforetagID, Antal DESC
