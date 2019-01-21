@@ -68,3 +68,90 @@ ORDER BY i.KundforetagID, Antal DESC
 
 SELECT * FROM [dw].[vy_ag_Innehav]
 ORDER BY KundforetagID, Antal DESC
+
+
+====================================================================
+
+SELECT
+hk.Datum,
+hk.ForsakringsNr,
+--COUNT(hk.ForsakringsNr) AS Nbr,
+hk.Pnr,
+hk.KundID,
+hk.TeamID,
+hk.RadgivarID,
+hk.ForsakringstagartypID,
+hk.ForsakringsbolagID,
+hk.ProdukttypID,
+hk.AffarstypID,
+hk.ForvaltningsformID,
+hk.Varde,
+hk.Navigera,
+hk.Premie,
+hk.PremieNavigera
+FROM dw.Hist_Kapital hk
+WHERE hk.Datum < DATEADD(year, -1, GETDATE())
+AND hk.Datum > DATEADD(year, -1, DATEADD(week, -1, GETDATE()))
+AND ProdukttypID IN ('1','2','3','4','5','6')
+AND hk.ForsakringsNr = '5177626'
+--GROUP BY hk.Datum, hk.ForsakringsNr
+--ORDER BY Nbr DESC
+
+--3652696
+--913177
+
+SELECT DISTINCT a.KoncernID, a.ForsakringsNr, a.Forsakringsbolag, a.Kapital FROM
+(SELECT
+kf.KoncernID,
+hk.ForsakringsNr,
+         case 
+           when hk.ForsakringsbolagID = 45       then 'AMF'
+           when hk.ForsakringsbolagID = -8002701 then 'Danica'
+           when hk.ForsakringsbolagID = 4        then 'Folksam'
+           when hk.ForsakringsbolagID = 65       then 'Länsförsäkringar'
+           when hk.ForsakringsbolagID = -8629972 then 'Movestic'
+           when hk.ForsakringsbolagID = 2        then 'SEB'
+           when hk.ForsakringsbolagID = 67       then 'Skandia'
+           when hk.ForsakringsbolagID = 3        then 'SPP'
+           else 'Övriga'
+         end as 'Forsakringsbolag',
+SUM(hk.Varde) AS 'Kapital'
+FROM sox.kundforetag kf, sox.kund k, dw.Hist_Kapital hk
+WHERE hk.Datum < DATEADD(year, -1, GETDATE())
+AND hk.Datum > DATEADD(year, -1, DATEADD(week, -1, GETDATE()))
+AND k.KundforetagID = kf.KundforetagID
+AND hk.KundID = k.KundID
+AND hk.ProdukttypID IN ('1','2','3','4','5','6')
+AND kf.KoncernID = '8164'
+GROUP BY  kf.KoncernID, hk.ForsakringsNr, hk.ForsakringsbolagID) a
+--JOIN sox.kapital k ON a.ForsakringsNr = k.ForsakringsNr
+WHERE a.ForsakringsNr = '5177626'
+WHERE a.KoncernID = '10097'
+
+
+
+select kf.KoncernID,
+         case 
+           when hk.ForsakringsbolagID = 45       then 'AMF'
+           when hk.ForsakringsbolagID = -8002701 then 'Danica'
+           when hk.ForsakringsbolagID = 4        then 'Folksam'
+           when hk.ForsakringsbolagID = 65       then 'Länsförsäkringar'
+           when hk.ForsakringsbolagID = -8629972 then 'Movestic'
+           when hk.ForsakringsbolagID = 2        then 'SEB'
+           when hk.ForsakringsbolagID = 67       then 'Skandia'
+           when hk.ForsakringsbolagID = 3        then 'SPP'
+           else 'Övriga'
+         end as 'Forsakringsbolag',
+         sum(hk.Varde) AS 'Kapital'
+  from sox.kundforetag kf, sox.kund k,sox.kapital ka, dw.Hist_Kapital hk
+  where k.KundforetagID = kf.KundforetagID
+    and hk.KundID = k.KundID
+	AND hk.Datum < DATEADD(year, -1, GETDATE())
+	AND hk.Datum > DATEADD(year, -1, DATEADD(week, -1, GETDATE()))
+  group by kf.KoncernID, hk.ForsakringsbolagID
+
+
+
+
+--5385639
+--ROW_NUMBER() OVER(PARTITION BY hk.ForsakringsNr ORDER BY hk.ForsakringsNr) AS RowNbr,
