@@ -100,7 +100,7 @@ AND hk.ForsakringsNr = '5177626'
 --3652696
 --913177
 
-SELECT DISTINCT a.KoncernID, a.ForsakringsNr, a.Forsakringsbolag, a.Kapital FROM
+SELECT DISTINCT a.KoncernID, a.Forsakringsbolag, SUM(a.Kapital) AS Kapital FROM
 (SELECT
 kf.KoncernID,
 hk.ForsakringsNr,
@@ -122,12 +122,10 @@ AND hk.Datum > DATEADD(year, -1, DATEADD(week, -1, GETDATE()))
 AND k.KundforetagID = kf.KundforetagID
 AND hk.KundID = k.KundID
 AND hk.ProdukttypID IN ('1','2','3','4','5','6')
-AND kf.KoncernID = '8164'
-GROUP BY  kf.KoncernID, hk.ForsakringsNr, hk.ForsakringsbolagID) a
+GROUP BY hk.Datum, kf.KoncernID, hk.ForsakringsNr, hk.ForsakringsbolagID) a
 --JOIN sox.kapital k ON a.ForsakringsNr = k.ForsakringsNr
-WHERE a.ForsakringsNr = '5177626'
-WHERE a.KoncernID = '10097'
-
+WHERE a.KoncernID = '8164'
+GROUP BY a.KoncernID, a.Forsakringsbolag
 
 
 select kf.KoncernID,
@@ -151,6 +149,29 @@ select kf.KoncernID,
   group by kf.KoncernID, hk.ForsakringsbolagID
 
 
+
+  --KÖRBAR!!!
+SELECT
+kf.KoncernID,
+         case 
+           when hk.ForsakringsbolagID = 45       then 'AMF'
+           when hk.ForsakringsbolagID = -8002701 then 'Danica'
+           when hk.ForsakringsbolagID = 4        then 'Folksam'
+           when hk.ForsakringsbolagID = 65       then 'Länsförsäkringar'
+           when hk.ForsakringsbolagID = -8629972 then 'Movestic'
+           when hk.ForsakringsbolagID = 2        then 'SEB'
+           when hk.ForsakringsbolagID = 67       then 'Skandia'
+           when hk.ForsakringsbolagID = 3        then 'SPP'
+           else 'Övriga'
+         end as 'Forsakringsbolag',
+SUM(hk.Varde) AS 'Kapital'
+FROM sox.kundforetag kf, sox.kund k, dw.Hist_Kapital hk
+WHERE hk.Datum < DATEADD(year, -1, GETDATE())
+AND hk.Datum > DATEADD(year, -1, DATEADD(week, -1, GETDATE()))
+AND k.KundforetagID = kf.KundforetagID
+AND hk.KundID = k.KundID
+AND hk.ProdukttypID IN ('1','2','3','4','5','6')
+GROUP BY kf.KoncernID, hk.ForsakringsbolagID
 
 
 --5385639
