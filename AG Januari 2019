@@ -176,3 +176,30 @@ GROUP BY kf.KoncernID, hk.ForsakringsbolagID
 
 --5385639
 --ROW_NUMBER() OVER(PARTITION BY hk.ForsakringsNr ORDER BY hk.ForsakringsNr) AS RowNbr,
+
+===============================================================================
+
+--PREMIE START
+
+SELECT
+kf.KoncernID,
+         case 
+           when hk.ForsakringsbolagID = 45       then 'AMF'
+           when hk.ForsakringsbolagID = -8002701 then 'Danica'
+           when hk.ForsakringsbolagID = 4        then 'Folksam'
+           when hk.ForsakringsbolagID = 65       then 'Länsförsäkringar'
+           when hk.ForsakringsbolagID = -8629972 then 'Movestic'
+           when hk.ForsakringsbolagID = 2        then 'SEB'
+           when hk.ForsakringsbolagID = 67       then 'Skandia'
+           when hk.ForsakringsbolagID = 3        then 'SPP'
+           else 'Övriga'
+         end as 'Forsakringsbolag',
+SUM(hk.Premie) AS 'Premie'
+FROM sox.kundforetag kf, sox.kund k, dw.Hist_Kapital hk
+WHERE hk.Datum < DATEADD(year, -1, GETDATE())
+AND hk.Datum > DATEADD(year, -1, DATEADD(week, -1, GETDATE()))
+AND k.KundforetagID = kf.KundforetagID
+AND hk.KundID = k.KundID
+AND hk.ProdukttypID IN ('1','2','3','4','5','6')
+AND Premie != '0'
+GROUP BY kf.KoncernID, hk.ForsakringsbolagID
