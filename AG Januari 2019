@@ -203,3 +203,62 @@ AND hk.KundID = k.KundID
 AND hk.ProdukttypID IN ('1','2','3','4','5','6')
 AND Premie != '0'
 GROUP BY kf.KoncernID, hk.ForsakringsbolagID
+
+===========================================================
+
+--Måste läggas till i script tillsammans med dkiprevyear
+
+create table sox.dki_prevprevyear
+  (TeamID        int,
+   KundforetagID int,
+   Orgnr         char(10),
+   Koncern       varchar(30),
+   KundID        int,
+   Period        char(7),
+   Datum         char(10),
+   Fraga1        decimal(12, 4),
+   AntalSvar1    decimal(12, 4),
+   Fraga2        decimal(12, 4),
+   AntalSvar2    decimal(12, 4),
+   Fraga3        decimal(12, 4),
+   AntalSvar3    decimal(12, 4),
+   Fraga4        decimal(12, 4),
+   AntalSvar4    decimal(12, 4),
+   Fraga5        decimal(12, 4),
+   AntalSvar5    decimal(12, 4),
+   Fraga6        decimal(12, 4),
+   AntalSvar6    decimal(12, 4),
+   Fraga7        decimal(12, 4),
+   AntalSvar7    decimal(12, 4));
+
+insert into sox.dki_prevprevyear
+select kf.TeamID,
+         kf.KundforetagID,
+         kf.Orgnr,
+         kf.Koncern,
+         m.KundID,
+         m.Period,
+         m.Datum,
+         case when m.Fraga1 is null then 0 else m.Fraga1 end,
+         case when m.Fraga1 is null then 0 else 1 end,
+         case when m.Fraga2 is null then 0 else m.Fraga2 end,
+         case when m.Fraga2 is null then 0 else 1 end,
+         case when m.Fraga3 is null then 0 else m.Fraga3 end,
+         case when m.Fraga3 is null then 0 else 1 end,
+         case when m.Fraga4 is null then 0 else m.Fraga4 end,
+         case when m.Fraga4 is null then 0 else 1 end,
+         case when m.Fraga5 is null then 0 else m.Fraga5 end,
+         case when m.Fraga5 is null then 0 else 1 end,
+         case when m.Fraga6 is null then 0 else m.Fraga6 end,
+         case when m.Fraga6 is null then 0 else 1 end,
+         case when m.Fraga7 is null then 0 else m.Fraga7 end,
+         case when m.Fraga7 is null then 0 else 1 end
+  from sox.kundforetag kf, dw.Mote m
+  where m.KundforetagID = kf.KundforetagID
+	and m.Datum between '2016-01-01' and '2016-12-31'
+    and m.AntalSvar > 0
+
+create index idx_teamid  on sox.dki_prevprevyear (TeamID);
+create index idx_orgnr   on sox.dki_prevprevyear (Orgnr);
+create index idx_koncern on sox.dki_prevprevyear (Koncern);
+	
