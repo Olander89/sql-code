@@ -1,0 +1,143 @@
+CREATE view [dw].[vy_ag_TjanstepensionForegAr]
+  (KoncernID,
+   Affarstyp,
+   AntalMedTjp,
+   Premie,
+   SnittPremie) as 
+  select KoncernID,
+         Affarstyp,
+         count(*),
+         sum(Premie),
+         avg(Premie)
+  from (select o.KoncernID,
+               f.Affarstyp,
+               sum(f.Premie) as Premie
+        from sox.orgnr o, sox.kundforetag kf, sox.kund k, dw.forsakring f
+        where kf.TeamID = o.TeamID
+          and kf.Orgnr = o.Orgnr
+          and k.KundforetagID = kf.KundforetagID
+          and f.KundID = k.KundID
+          and (f.Produkttyp = 'Tjänstepension' or (f.Affarstyp in ('UIG-4', 'Maxplan PC') and (f.Sjuk = 'j' or f.Premiebefrielse = 'j')))
+		  and f.Datering < '2017-12-31'
+        group by o.KoncernID, f.Affarstyp, k.Pnr) as t
+  group by KoncernID, Affarstyp
+  
+  union all
+  
+  select EgetKoncernID,
+         Affarstyp,
+         count(*),
+         sum(Premie),
+         avg(Premie)
+  from (select o.EgetKoncernID,
+               f.Affarstyp,
+               sum(f.Premie) as Premie
+        from sox.orgnr o, sox.kundforetag kf, sox.kund k, dw.forsakring f
+        where kf.TeamID = o.TeamID
+          and kf.Orgnr = o.Orgnr
+          and k.KundforetagID = kf.KundforetagID
+          and f.KundID = k.KundID
+          and o.EgetKoncernID is not null
+          and (f.Produkttyp = 'Tjänstepension' or (f.Affarstyp in ('UIG-4', 'Maxplan PC') and (f.Sjuk = 'j' or f.Premiebefrielse = 'j')))
+		  and f.Datering < '2017-12-31'
+        group by o.EgetKoncernID, f.Affarstyp, k.Pnr) as t
+  group by EgetKoncernID, Affarstyp
+  
+  
+  
+  create view [dw].[vy_ag_LonevaxlingForegAr]
+  (KoncernID,
+   Affarstyp,
+   AntalMedLvxl,
+   Premie,
+   SnittPremie) as 
+  select KoncernID,
+         '',
+         count(*),
+         sum(Premie),
+         avg(Premie)
+  from (select o.KoncernID,
+               sum(f.Premie) as Premie
+        from sox.orgnr o, sox.kundforetag kf, sox.kund k, dw.forsakring f
+        where kf.TeamID = o.TeamID
+          and kf.Orgnr = o.Orgnr
+          and k.KundforetagID = kf.KundforetagID
+          and f.KundID = k.KundID
+          and f.Produkttyp = 'Löneväxling'
+		  and f.Datering BETWEEN '2017-01-01' AND '2017-12-31'
+        group by o.KoncernID, k.Pnr) as t
+  group by KoncernID
+  
+  union all
+  
+  select EgetKoncernID,
+         '',
+         count(*),
+         sum(Premie),
+         avg(Premie)
+  from (select o.EgetKoncernID,
+               sum(f.Premie) as Premie
+        from sox.orgnr o, sox.kundforetag kf, sox.kund k, dw.forsakring f
+        where kf.TeamID = o.TeamID
+          and kf.Orgnr = o.Orgnr
+          and k.KundforetagID = kf.KundforetagID
+          and f.KundID = k.KundID
+          and o.EgetKoncernID is not null
+          and f.Produkttyp = 'Löneväxling'
+          and f.Datering BETWEEN '2017-01-01' AND '2017-12-31'
+		  group by o.EgetKoncernID, k.Pnr) as t
+  group by EgetKoncernID
+  
+  
+  
+  create view [dw].[vy_ag_PremieForsakringsbolagForegaendeAr]
+  (KoncernID,
+   Forsakringsbolag,
+   Premie) as
+  select kf.KoncernID,
+         case 
+           when hk.ForsakringsbolagID = 45       then 'AMF'
+           when hk.ForsakringsbolagID = -8002701 then 'Danica'
+           when hk.ForsakringsbolagID = 4        then 'Folksam'
+           when hk.ForsakringsbolagID = 65       then 'Länsförsäkringar'
+           when hk.ForsakringsbolagID = -8629972 then 'Movestic'
+           when hk.ForsakringsbolagID = 2        then 'SEB'
+           when hk.ForsakringsbolagID = 67       then 'Skandia'
+           when hk.ForsakringsbolagID = 3        then 'SPP'
+           else 'Övriga'
+         end as 'Forsakringsbolag',
+         sum(hk.Premie) AS 'Premie'
+  from sox.kundforetag kf, sox.kund k, dw.Hist_Kapital hk
+  WHERE hk.Datum < DATEADD(year, -1, GETDATE())
+  AND hk.Datum > DATEADD(year, -1, DATEADD(week, -1, GETDATE()))
+  AND k.KundforetagID = kf.KundforetagID
+  AND hk.KundID = k.KundID
+  AND hk.ProdukttypID IN ('1','2','3','4','5','6')
+  group by kf.KoncernID, hk.ForsakringsbolagID
+  
+  union all
+  
+  SELECT
+		o.EgetKoncernID,
+         case 
+           when hk.ForsakringsbolagID = 45       then 'AMF'
+           when hk.ForsakringsbolagID = -8002701 then 'Danica'
+           when hk.ForsakringsbolagID = 4        then 'Folksam'
+           when hk.ForsakringsbolagID = 65       then 'Länsförsäkringar'
+           when hk.ForsakringsbolagID = -8629972 then 'Movestic'
+           when hk.ForsakringsbolagID = 2        then 'SEB'
+           when hk.ForsakringsbolagID = 67       then 'Skandia'
+           when hk.ForsakringsbolagID = 3        then 'SPP'
+           else 'Övriga'
+         end as 'Forsakringsbolag',
+SUM(hk.Premie) AS 'Premie'
+FROM sox.orgnr o, sox.kundforetag kf, sox.kund k, dw.Hist_Kapital hk
+WHERE hk.Datum < DATEADD(year, -1, GETDATE())
+AND hk.Datum > DATEADD(year, -1, DATEADD(week, -1, GETDATE()))
+AND k.KundforetagID = kf.KundforetagID
+AND hk.KundID = k.KundID
+AND hk.ProdukttypID IN ('1','2','3','4','5','6')
+AND kf.TeamID = o.TeamID
+AND kf.Orgnr = o.Orgnr
+AND o.EgetKoncernID IS NOT NULL
+GROUP BY o.EgetKoncernID, hk.ForsakringsbolagID
