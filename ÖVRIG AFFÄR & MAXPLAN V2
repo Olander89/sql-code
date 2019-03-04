@@ -141,3 +141,34 @@ from stage.pml_Loner l
 left outer join stage.pml_Premieplaner pp on pp.xID = l.xPremie
 where l.xAnstal = dw.#temp1.KundID
   and l.Datum = (select max(datum) from stage.pml_Loner l2 where l2.xAnstal = l.xAnstal)
+  
+  
+  
+  SELECT
+Orgnr,
+Rådgivare,
+Affärstyp,
+Skattekategori,
+Försäkringsbolag,
+Premie,
+Värde,
+Trad,
+Fond,
+Navigera,
+CASE WHEN Sjuk = 'n' THEN ''
+	 WHEN Sjuk = 'j' THEN 'j' 
+	 WHEN Sjuk IS NULL THEN ''
+END AS Sjuk,
+CASE WHEN Trappa = 'n' THEN ''
+	 WHEN Trappa = 'j' THEN 'j'
+	 WHEN Trappa IS NULL THEN ''
+END AS Trappa
+FROM #Temp1  --114.314 Aktiva Sparförsäkringar i OA/Maxplan
+WHERE #Temp1.Orgnr NOT IN (SELECT DISTINCT f.ForsakringstagareNr FROM dw.Forsakring f JOIN dw.Kund k ON f.KundID = k.KundID
+							WHERE f.Status = 'Gällande' AND f.Spar = 'j' AND f.Affarstyp IN ('Maxplan PC', 'SK')
+							AND f.Produkttyp NOT IN ('Koll. förmånsbaserad', 'Koll. kompletterande', 'Koll. odefinierad', 'Koll. premiebaserad', 'Privat pension')
+							AND k.Aktiv = 'j' AND f.Premie > '0') --48.400 Aktiva Sparförsäkringar i SK/Maxplan PC med Premie > 0
+--Tillägg 2019-03-04
+AND #Temp1.Försäkringsbolag IN ('AMF Pension', 'Danica Pension', 'Folksam', 'Länsförsäkringar', 'Movestic', 'SEB Trygg Liv', 'Skandia', 'SPP Livförsäkring') -- Avgränsa till dessa Försäkringsbolag
+AND #Temp1.Premie > '0'
+-- Ta bort "Enbart Navigera"
