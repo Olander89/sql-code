@@ -142,9 +142,11 @@ left outer join stage.pml_Premieplaner pp on pp.xID = l.xPremie
 where l.xAnstal = dw.#temp1.KundID
   and l.Datum = (select max(datum) from stage.pml_Loner l2 where l2.xAnstal = l.xAnstal)
   
+ 
+==================================================================================
+--Revidering
   
-  
-  SELECT
+SELECT
 Orgnr,
 Rådgivare,
 Affärstyp,
@@ -172,3 +174,4 @@ WHERE #Temp1.Orgnr NOT IN (SELECT DISTINCT f.ForsakringstagareNr FROM dw.Forsakr
 AND #Temp1.Försäkringsbolag IN ('AMF Pension', 'Danica Pension', 'Folksam', 'Länsförsäkringar', 'Movestic', 'SEB Trygg Liv', 'Skandia', 'SPP Livförsäkring') -- Avgränsa till dessa Försäkringsbolag
 AND #Temp1.Premie > '0'
 -- Ta bort "Enbart Navigera"
+AND #Temp1.Värde != #Temp1.Navigera
