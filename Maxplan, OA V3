@@ -1,0 +1,179 @@
+-- 2018-10-18 Inkluderat Sparförsäkringar, Plockat bort alla Orgnr med försäkringar även inom inom Maxplan PC / SK
+-- 2018-10-19 Inkluderat Rådgivare, Påbörjat utsökning för Premietrappa eller Fast premie
+-- 2018-10-24 Inkluderad PremieTrappa och formaterat den samt Sjuk
+
+CREATE TABLE #Temp1
+(
+KundID VARCHAR(25),
+KundforetagID VARCHAR(25),
+Orgnr CHAR(10),
+Namn VARCHAR(50),
+Rådgivare VARCHAR(50),
+Affärstyp CHAR(10),
+Skattekategori CHAR(1),
+Försäkringsbolag VARCHAR(25),
+Premie INT,
+Värde INT,
+Trad INT,
+Fond INT,
+Navigera INT,
+Sjuk CHAR(1),
+Trappa CHAR(1)
+)
+
+DROP TABLE #Temp1
+
+INSERT INTO #Temp1 (KundID, KundforetagID, Orgnr, Namn, Rådgivare, Affärstyp, Skattekategori, Försäkringsbolag, Premie, Värde, Trad, Fond, Navigera, Sjuk)
+
+SELECT 
+asd2.KundID,
+asd2.KundforetagID,
+asd1.Orgnr,
+asd1.Namn,
+asd2.Rådgivare,
+asd2.Affärstyp,
+asd2.Skattekategori,
+asd2.Försäkringsbolag,
+asd2.Premie,
+asd2.Värde,
+asd2.Trad,
+asd2.Fond,
+asd2.Navigera,
+asd2.Sjuk
+FROM
+(SELECT DISTINCT kf.Orgnr, kf.Namn
+FROM dw.Kundforetag kf
+WHERE kf.Aktiv = 'j'
+-- Plocka bort IBM
+AND kf.Orgnr != '5560266883'
+-- Kontrollera ersättning
+AND (EXISTS (select 1 from dw.Prov_Provision p where p.Period  BETWEEN '2018-01' AND '2019-02' AND p.ForsakringstagareOrgnr = kf.Orgnr AND BolagID = '1')
+OR EXISTS (select 1 from dw.Arvode ar where ar.Period BETWEEN '2018-01' and '2019-02' AND ar.Orgnr = kf.Orgnr))) asd1
+
+JOIN
+
+(SELECT
+f.KundID				AS 'KundID',
+kf.KundforetagID		AS 'KundforetagID',
+f.ForsakringstagareNr	AS 'Orgnr',
+r.Namn					AS 'Rådgivare',
+f.Affarstyp				AS 'Affärstyp',
+f.Skattekategori		AS 'Skattekategori',
+fb.Namn					AS 'Försäkringsbolag',
+f.Premie				AS 'Premie',
+f.Varde					AS 'Värde',
+f.Trad					AS 'Trad',
+f.Fond					AS 'Fond',
+f.Navigera				AS 'Navigera',
+f.Sjuk					AS 'Sjuk'
+FROM dw.Forsakring f
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+JOIN dw.Kund k ON f.KundID = k.KundID
+JOIN dw.Kundforetag kf ON k.KundforetagID = kf.KundforetagID
+LEFT JOIN dw.Radgivare r ON k.RadgivarID = r.RadgivarID
+WHERE f.Affarstyp = 'Maxplan'
+OR f.Affarstyp IS NULL
+AND f.Produkttyp NOT IN ('Koll. förmånsbaserad', 'Koll. kompletterande', 'Koll. odefinierad', 'Koll. premiebaserad', 'Privat pension')
+AND f.Status = 'Gällande'
+AND k.Aktiv = 'j'
+AND f.Spar = 'j') asd2
+
+ON asd1.Orgnr = asd2.Orgnr
+ORDER BY asd1.Orgnr
+
+SELECT DISTINCT f.Affarstyp
+FROM dw.Forsakring f
+
+
+SELECT f.Affarstyp, SUM(f.Premie) AS 'Total Premie'
+FROM dw.Forsakring f
+WHERE f.ForsakringstagareNr IN
+(SELECT DISTINCT kf.Orgnr
+FROM dw.Kundforetag kf
+WHERE kf.Aktiv = 'j'
+-- Plocka bort IBM
+AND kf.Orgnr != '5560266883'
+-- Kontrollera ersättning
+AND (EXISTS (select 1 from dw.Prov_Provision p where p.Period  BETWEEN '2017-09' AND '2018-10' AND p.ForsakringstagareOrgnr = kf.Orgnr AND BolagID = '1')
+OR EXISTS (select 1 from dw.Arvode ar where ar.Period BETWEEN '2017-09' and '2018-10' AND ar.Orgnr = kf.Orgnr)))
+AND f.Produkttyp NOT IN ('Koll. förmånsbaserad', 'Koll. kompletterande', 'Koll. odefinierad', 'Koll. premiebaserad', 'Privat pension')
+AND f.Status = 'Gällande'
+GROUP BY f.Affarstyp
+
+
+SELECT
+Orgnr, Rådgivare, Affärstyp, Skattekategori, Försäkringsbolag, Premie, Värde, Trad, Fond, Navigera,
+CASE WHEN Sjuk = 'n' THEN  ''
+WHEN Sjuk = 'j' THEN 'j' 
+WHEN Sjuk IS NULL THEN '' END AS Sjuk,
+CASE WHEN Trappa = 'n' THEN ''
+WHEN Trappa = 'j' THEN 'j'
+WHEN Trappa IS NULL THEN ''
+END AS Trappa
+
+FROM #Temp1  --114.314 Aktiva Sparförsäkringar i OA/Maxplan
+
+WHERE #Temp1.Orgnr NOT IN (SELECT DISTINCT f.ForsakringstagareNr FROM dw.Forsakring f JOIN dw.Kund k ON f.KundID = k.KundID
+							WHERE f.Status = 'Gällande' AND f.Spar = 'j' AND f.Affarstyp IN ('Maxplan PC', 'SK')
+							AND f.Produkttyp NOT IN ('Koll. förmånsbaserad', 'Koll. kompletterande', 'Koll. odefinierad', 'Koll. premiebaserad', 'Privat pension')
+							AND k.Aktiv = 'j' AND f.Premie > '0') --48.400 Aktiva Sparförsäkringar i SK/Maxplan PC med Premie > 0
+
+ORDER BY Orgnr --68.440 Vars Orgnr inte också finns med i SK/Maxplan PC
+
+
+
+
+
+--Början på utsökning för Fast Premie eller Premietrappa
+SELECT TOP(1000) k.KundID, k.KundforetagID, k.RadgivarID, k.AdministratorID, k.PlaceringsradgivarID, k.Pnr, k.Namn, k.Fornamn, k.Efternamn, k.Adress, k.Postnr, k.Ort, l.Lon,
+CASE WHEN pp.xForeta = k.KundforetagID and pp.Plantyp in (6, 7, 10) THEN 'j' ELSE 'n' END AS 'Procentplan'
+FROM dw.Kund k
+JOIN stage.Pml_loner l ON k.KundID = l.xAnstal
+LEFT OUTER JOIN stage.pml_Premieplaner pp ON pp.xID = l.xPremie
+WHERE k.Aktiv = 'j'
+AND l.Datum = (SELECT MAX(datum) FROM stage.pml_Loner l2 WHERE l2.xAnstal = l.xAnstal)
+
+SELECT TOP(1000) * 
+FROM PML_PROD.pml.dbo.dw_vy_Premieplaner
+
+update #temp1
+set Trappa = case when pp.xForeta = #temp1.KundforetagID and pp.Plantyp in (6, 7, 10) then 'j' else 'n' end
+from stage.pml_Loner l
+left outer join stage.pml_Premieplaner pp on pp.xID = l.xPremie
+where l.xAnstal = dw.#temp1.KundID
+  and l.Datum = (select max(datum) from stage.pml_Loner l2 where l2.xAnstal = l.xAnstal)
+  
+ 
+==================================================================================
+--Revidering
+  
+SELECT
+Namn,
+Orgnr,
+Rådgivare,
+Affärstyp,
+Skattekategori,
+Försäkringsbolag,
+Premie,
+Värde,
+Trad,
+Fond,
+Navigera,
+CASE WHEN Sjuk = 'n' THEN ''
+	 WHEN Sjuk = 'j' THEN 'j' 
+	 WHEN Sjuk IS NULL THEN ''
+END AS Sjuk,
+CASE WHEN Trappa = 'n' THEN ''
+	 WHEN Trappa = 'j' THEN 'j'
+	 WHEN Trappa IS NULL THEN ''
+END AS Trappa
+FROM #Temp1  --114.314 Aktiva Sparförsäkringar i OA/Maxplan
+WHERE #Temp1.Orgnr NOT IN (SELECT DISTINCT f.ForsakringstagareNr FROM dw.Forsakring f JOIN dw.Kund k ON f.KundID = k.KundID
+							WHERE f.Status = 'Gällande' AND f.Spar = 'j' AND f.Affarstyp IN ('Maxplan PC', 'SK')
+							AND f.Produkttyp NOT IN ('Koll. förmånsbaserad', 'Koll. kompletterande', 'Koll. odefinierad', 'Koll. premiebaserad', 'Privat pension')
+							AND k.Aktiv = 'j' AND f.Premie > '0') --48.400 Aktiva Sparförsäkringar i SK/Maxplan PC med Premie > 0
+--Tillägg 2019-03-04
+AND #Temp1.Försäkringsbolag IN ('AMF Pension', 'Danica Pension', 'Folksam', 'Länsförsäkringar', 'Movestic', 'SEB Trygg Liv', 'Skandia', 'SPP Livförsäkring') -- Avgränsa till dessa Försäkringsbolag
+AND #Temp1.Premie > '0'
+-- Ta bort "Enbart Navigera"
+AND #Temp1.Värde != #Temp1.Navigera
