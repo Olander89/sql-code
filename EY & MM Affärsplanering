@@ -1,0 +1,52 @@
+SELECT TOP (1000) *
+FROM dw.Forsakring
+
+SELECT Affarstyp, COUNT(Affarstyp)
+  FROM [Datawarehouse].[dw].[Forsakring]
+  WHERE Status = 'Gällande'
+  AND Datering BETWEEN '2018-01-01' AND '2018-12-31'
+  GROUP BY Affarstyp
+
+  SELECT Affarstyp, COUNT(Affarstyp)
+  FROM dw.Forsakring
+  WHERE Status = 'Gällande'
+  AND Tjanstepension = 'j'
+  GROUP BY Affarstyp
+
+  SELECT *
+  FROM dw.Forsakring
+  WHERE Affarstyp IS NULL
+  AND Status = 'Gällande'
+  AND Tjanstepension = 'j'
+
+  
+CREATE TABLE #Temp(
+Orgnr VARCHAR (10)
+)
+
+INSERT INTO #Temp (Orgnr) 
+
+SELECT DISTINCT kf.Orgnr
+FROM dw.Kundforetag kf
+WHERE kf.Aktiv = 'j'
+-- Plocka bort IBM
+AND kf.Orgnr != '5560266883'
+-- Kontrollera ersättning
+AND (EXISTS (select 1 from dw.Prov_Provision p where p.Period  BETWEEN '2018-01' AND '2018-12' AND p.ForsakringstagareOrgnr = kf.Orgnr)
+OR EXISTS (select 1 from dw.Arvode ar where ar.Period BETWEEN '2018-01' and '2018-12' AND ar.Orgnr = kf.Orgnr))
+
+SELECT
+t.Orgnr,
+SUM(pp.ProvisionNetto) AS 'Provision'
+FROM #Temp t
+LEFT JOIN dw.Prov_Provision pp ON t.Orgnr = pp.ForsakringstagareOrgnr
+WHERE pp.Period BETWEEN '2018-01' AND '2018-12'
+GROUP BY t.Orgnr
+
+SELECT
+t.Orgnr,
+SUM(a.Belopp) AS 'Belopp'
+FROM #Temp t
+LEFT JOIN dw.Arvode a ON t.Orgnr = a.Orgnr
+WHERE a.Period BETWEEN '2018-01' AND '2018-12'
+GROUP BY t.Orgnr
