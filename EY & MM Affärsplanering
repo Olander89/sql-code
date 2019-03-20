@@ -21,12 +21,15 @@ SELECT Affarstyp, COUNT(Affarstyp)
 
   
 CREATE TABLE #Temp(
+KundforetagID INT,
 Orgnr VARCHAR (10)
 )
 
-INSERT INTO #Temp (Orgnr) 
+DROP TABLE #Temp
 
-SELECT DISTINCT kf.Orgnr
+INSERT INTO #Temp (KundforetagID, Orgnr) 
+
+SELECT DISTINCT kf.KundforetagID, kf.Orgnr
 FROM dw.Kundforetag kf
 WHERE kf.Aktiv = 'j'
 -- Plocka bort IBM
@@ -34,6 +37,17 @@ AND kf.Orgnr != '5560266883'
 -- Kontrollera ersättning
 AND (EXISTS (select 1 from dw.Prov_Provision p where p.Period  BETWEEN '2018-01' AND '2018-12' AND p.ForsakringstagareOrgnr = kf.Orgnr)
 OR EXISTS (select 1 from dw.Arvode ar where ar.Period BETWEEN '2018-01' and '2018-12' AND ar.Orgnr = kf.Orgnr))
+
+SELECT t.KundforetagID, t.Orgnr, COUNT(k.KundforetagID) AS 'Aktiva Anställda'
+FROM #Temp t
+JOIN dw.Kund k ON t.KundforetagID = k.KundforetagID
+WHERE k.Aktiv = 'j'
+GROUP BY t.KundforetagID, t.Orgnr
+
+SELECT * FROM dw.Kund
+WHERE Aktiv = 'j'
+AND KundforetagID IN (SELECT KundforetagID FROM #Temp)
+--144.910 aktiva Kundindivider från Kundföretag vi tjänat pengar på under 2018
 
 SELECT
 t.Orgnr,
