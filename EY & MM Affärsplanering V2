@@ -1,0 +1,209 @@
+/****** Script for SelectTopNRows command from SSMS  ******/
+--SELECT KundID, KundforetagID, RadgivarID, Pnr, Datum,
+--LAST_VALUE(Datum) OVER (PARTITION BY KundforetagID ORDER BY Datum ASC) AS 'LAST_VALUE'
+--FROM [Datawarehouse].[dw].[Hist_Kund]
+--WHERE Datum > '2014-01-01'
+--ORDER BY Datum ASC
+
+DROP TABLE #Temp
+
+CREATE TABLE #Temp(
+År INT,
+MinDate VARCHAR (10),
+MaxDate VARCHAR (10),
+KundforetagID INT,
+KundID INT,
+RadgivarID INT,
+Pnr VARCHAR (12),
+Provisionstyp VARCHAR (50),
+Provision NUMERIC (24,8)
+)
+
+INSERT INTO #Temp (År, MinDate, MaxDate, KundforetagID, KundID, RadgivarID, Pnr)
+
+SELECT
+one.År,
+one.MinDate,
+one.MaxDate,
+one.KundforetagID,
+one.KundID,
+one.RadgivarID,
+one.Pnr
+FROM(
+SELECT LEFT(hk.Datum, 4) AS 'År', MIN(hk.Datum) AS 'MinDate', MAX(hk.Datum) AS 'MaxDate', hk.KundforetagID, hk.KundID, hk.RadgivarID, hk.Pnr
+FROM dw.Hist_Kund hk
+GROUP BY LEFT(hk.Datum, 4), hk.KundforetagID, hk.KundID, hk.RadgivarID, hk.Pnr) one
+WHERE one.MinDate >= '2014-01-01' AND one.MaxDate <= '2018-12-31'
+ORDER BY KundforetagID, År
+
+DROP TABLE #Temp2
+
+CREATE TABLE #Temp2(
+År INT,
+MinDate VARCHAR (10),
+MaxDate VARCHAR (10),
+KundforetagID INT,
+KundID INT,
+RadgivarID INT,
+Pnr VARCHAR (12),
+Provisionstyp VARCHAR (50),
+Provision NUMERIC (24,8)
+)
+
+INSERT INTO #Temp2(År, MinDate, MaxDate, KundforetagID, KundID, RadgivarID, Pnr, Provisionstyp, Provision)
+
+  SELECT
+  t.År,
+  t.MinDate,
+  t.MaxDate,
+  t.KundforetagID,
+  t.KundID,
+  t.RadgivarID,
+  t.Pnr,
+  a.Provisionstyp,
+  a.Provision
+  FROM(
+	SELECT LEFT(pp.Period, 4) AS 'År', pp.provisionstyp, pp.ForsakradPnr, SUM(pp.ProvisionNetto) AS 'Provision'
+	FROM dw.Prov_Provision pp
+	WHERE ForsakradPnr IS NOT NULL
+	GROUP BY LEFT(pp.Period, 4), pp.provisionstyp, pp.ForsakradPnr) a
+  RIGHT JOIN #Temp t ON a.ForsakradPnr = t.Pnr AND a.År = t.År
+  ORDER BY a.ForsakradPnr, a.År
+  --1.875.369st
+
+DROP TABLE dbo.Hist_Kund
+
+CREATE TABLE dbo.Hist_Kund(
+År INT,
+MinDate VARCHAR (10),
+MaxDate VARCHAR (10),
+KundforetagID INT,
+KundID INT,
+RadgivarID INT,
+Pnr VARCHAR (12),
+Provisionstyp VARCHAR (50),
+Provision NUMERIC (24,8),
+Premieersattning INT,
+Engangsersattning INT,
+Kapitalersattning INT,
+Navigeraersattning INT,
+Maxfonderersattning INT,
+Privatersattning INT
+)
+
+INSERT INTO dbo.Hist_Kund(År, MinDate, MaxDate, KundforetagID, KundID, RadgivarID, Pnr, Provisionstyp, Provision, Premieersattning, Engangsersattning, Kapitalersattning, Navigeraersattning, Maxfonderersattning, Privatersattning)
+
+SELECT
+	t.År,
+	t.MinDate,
+	t.MaxDate,
+	t.KundforetagID,
+	t.KundID,
+	t.RadgivarID,
+	t.Pnr,
+	t.Provisionstyp,
+	t.Provision,
+      sum(case when pp.Produktgrupp not in ('Navigera', 'Maxfonder', 'Privat', 'ISK') and
+                     pp.Provisionstyp in ('Premieersättning','Konverteringsavgift',
+                                         'Korrigeringar','Manuell transaktion','Provision',
+                                         'Styckersättning','Up-front','Återtag','Annullation')
+             then pp.ProvisionBrutto else 0 end)                                                  as Premieersattning,
+       sum(case when pp.Produktgrupp not in ('Navigera', 'Maxfonder', 'Privat', 'ISK') and
+                     pp.Provisionstyp = 'Engångspremie'
+             then pp.ProvisionBrutto else 0 end)                                                  as Engangsersattning,
+       sum(case when pp.Produktgrupp not in ('Navigera', 'Maxfonder', 'Privat', 'ISK') and
+                     pp.Provisionstyp = 'Kapitalersättning'
+             then pp.ProvisionBrutto else 0 end)                                                  as Kapitalersattning,
+       sum(case when pp.Produktgrupp = 'Navigera'         then pp.ProvisionBrutto else 0 end)     as Navigeraersattning,
+       sum(case when pp.Produktgrupp = 'Maxfonder'        then pp.ProvisionBrutto else 0 end)     as Maxfonderersattning,
+       sum(case when pp.Produktgrupp in ('Privat', 'ISK') then pp.ProvisionBrutto else 0 end)     as Privatersattning
+  FROM #Temp2 t
+  INNER JOIN dw.Prov_Provision pp ON t.Pnr = pp.ForsakradPnr AND t.År = LEFT(pp.Period, 4)
+  WHERE pp.Produktgrupp != 'Sakförsäkring'
+  AND pp.Mottagartyp != 'Kundföretag'
+  GROUP BY 	t.År, t.MinDate, t.MaxDate, t.KundforetagID, t.KundID, t.RadgivarID, t.Pnr, t.Provisionstyp, t.Provision
+
+
+/*
+  SELECT hk.År, hk.MinDate, hk.MaxDate, hk.KundforetagID, hk.KundID, hk.RadgivarID, hk.Pnr, hk.Provisionstyp, hk.Provision, pp.ProvisionNetto
+  FROM [Datawarehouse].[dbo].[Hist_Kund] hk
+  LEFT JOIN dw.Prov_Provision pp ON hk.Pnr = pp.ForsakradPnr AND hk.År = LEFT(pp.Period, 4)
+  WHERE pp.Produktgrupp = 'Maxfonder'
+
+  SELECT hk.År, hk.MinDate, hk.MaxDate, hk.KundforetagID, hk.KundID, hk.RadgivarID, hk.Pnr, hk.Provisionstyp, hk.Provision, pp.ProvisionNetto
+  FROM [Datawarehouse].[dbo].[Hist_Kund] hk
+  LEFT JOIN dw.Prov_Provision pp ON hk.Pnr = pp.ForsakradPnr AND hk.År = LEFT(pp.Period, 4)
+  WHERE pp.Produktgrupp IN ('Privat', 'ISK')
+
+  SELECT hk.År, hk.MinDate, hk.MaxDate, hk.KundforetagID, hk.KundID, hk.Pnr, hk.Provisionstyp, hk.Provision, pp.ProvisionNetto
+  FROM [Datawarehouse].[dbo].[Hist_Kund] hk
+  LEFT JOIN dw.Prov_Provision pp ON hk.Pnr = pp.ForsakradPnr AND hk.År = LEFT(pp.Period, 4)
+  WHERE pp.Produktgrupp not in ('Navigera', 'Maxfonder', 'Privat', 'ISK') AND pp.Provisionstyp in ('Premieersättning','Konverteringsavgift','Korrigeringar','Manuell transaktion','Provision','Styckersättning','Up-front','Återtag','Annullation')
+
+*/
+
+/*
+UNION ALL 
+
+SELECT
+one.År,
+one.MinDate,
+one.MaxDate,
+one.KundforetagID,
+one.KundID,
+one.RadgivarID,
+one.Pnr
+FROM(
+SELECT hk.KundforetagID, hk.KundID, hk.RadgivarID, hk.Pnr, MIN(hk.Datum) AS 'MinDate', MAX(hk.Datum) AS 'MaxDate', '2015' AS 'År' 
+FROM dw.Hist_Kund hk
+GROUP BY hk.KundforetagID, hk.KundID, hk.RadgivarID, hk.Pnr) one
+WHERE one.MinDate BETWEEN '2015-01-01' AND '2015-12-31'
+
+UNION ALL
+
+SELECT
+one.År,
+one.MinDate,
+one.MaxDate,
+one.KundforetagID,
+one.KundID,
+one.RadgivarID,
+one.Pnr
+FROM(
+SELECT hk.KundforetagID, hk.KundID, hk.RadgivarID, hk.Pnr, MIN(hk.Datum) AS 'MinDate', MAX(hk.Datum) AS 'MaxDate', '2016' AS 'År' 
+FROM dw.Hist_Kund hk
+GROUP BY hk.KundforetagID, hk.KundID, hk.RadgivarID, hk.Pnr) one
+WHERE one.MinDate BETWEEN '2016-01-01' AND '2016-12-31'
+
+UNION ALL
+
+SELECT
+one.År,
+one.MinDate,
+one.MaxDate,
+one.KundforetagID,
+one.KundID,
+one.RadgivarID,
+one.Pnr
+FROM(
+SELECT hk.KundforetagID, hk.KundID, hk.RadgivarID, hk.Pnr, MIN(hk.Datum) AS 'MinDate', MAX(hk.Datum) AS 'MaxDate', '2017' AS 'År' 
+FROM dw.Hist_Kund hk
+GROUP BY hk.KundforetagID, hk.KundID, hk.RadgivarID, hk.Pnr) one
+WHERE one.MinDate BETWEEN '2017-01-01' AND '2017-12-31'
+
+UNION ALL
+
+SELECT
+one.År,
+one.MinDate,
+one.MaxDate,
+one.KundforetagID,
+one.KundID,
+one.RadgivarID,
+one.Pnr
+FROM(
+SELECT hk.KundforetagID, hk.KundID, hk.RadgivarID, hk.Pnr, MIN(hk.Datum) AS 'MinDate', MAX(hk.Datum) AS 'MaxDate', '2018' AS 'År' 
+FROM dw.Hist_Kund hk
+GROUP BY hk.KundforetagID, hk.KundID, hk.RadgivarID, hk.Pnr) one
+WHERE one.MinDate BETWEEN '2018-01-01' AND '2018-12-31'
+*/
