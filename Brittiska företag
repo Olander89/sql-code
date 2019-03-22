@@ -1,0 +1,57 @@
+/****** Script for SelectTopNRows command from SSMS  ******/
+CREATE TABLE #Temp (
+Orgnr CHAR(10)
+)
+
+CREATE TABLE #Temp2 (
+Orgnr CHAR(10)
+)
+
+
+DROP TABLE #Temp
+
+INSERT INTO #Temp (Orgnr)
+SELECT DISTINCT Orgnr FROM(
+SELECT DISTINCT f.Foretag, f.Orgnr, f.fAdress, f.fBesAdress, f.fOrt, t.Team, COUNT(k.KundID) AS  'Anställda', t1.Orgnr AS 'Orgnr med intjäning'
+  FROM [Datawarehouse].[stage].[pml_ContactInfo] ci
+  JOIN [stage].[pml_PersonContact] pc ON ci.xID = pc.xContactInfo
+  JOIN [stage].[pml_CompanyPerson] cp ON pc.xPerson = cp.xPerson
+  JOIN [stage].[pml_Foretag] f ON cp.xCompany = f.xID
+  JOIN dw.Kundforetag kf ON f.Orgnr = kf.Orgnr
+  JOIN dw.Radgivare r ON kf.RadgivarID = r.RadgivarID
+  JOIN dw.Team t ON r.TeamID = t.TeamID
+  JOIN dw.Kund k ON kf.KundforetagID = k.KundforetagID
+  LEFT JOIN #Temp2 t1 ON f.Orgnr = t1.Orgnr
+  WHERE ContactData LIKE '%.uk%'
+  AND kf.Aktiv = 'j'
+  AND k.Aktiv = 'j'
+  OR ci.ContactData LIKE '+44%'
+  OR ci.ContactData LIKE '0044%'
+  GROUP BY f.Foretag, f.Orgnr, f.fAdress, f.fBesAdress, f.fOrt, t.Team, t1.Orgnr
+  ORDER BY COUNT(k.KundID) DESC) a
+
+
+
+INSERT INTO #Temp2 (Orgnr)
+SELECT DISTINCT kf.Orgnr
+FROM dw.Kundforetag kf
+WHERE kf.Aktiv = 'j'
+-- Plocka bort IBM, som inte längre är vår kund
+AND kf.Orgnr != '5560266883'
+-- Vi bör ha fått någon form av ersättning från företaget
+AND (EXISTS (select 1 from dw.Prov_Provision p where p.Period  BETWEEN '2018-01' AND '2018-12' AND p.ForsakringstagareOrgnr = kf.Orgnr)
+OR EXISTS (select 1 from dw.Arvode ar where ar.Period BETWEEN '2018-01' and '2018-12' AND ar.Orgnr = kf.Orgnr))
+AND kf.Orgnr IN (SELECT * FROM #Temp )
+
+SELECT * FROM #Temp2
+
+
+SELECT kf.KundforetagID, COUNT(k.KundID) AS 'Anställda'
+FROM #Temp2 t
+JOIN dw.Kundforetag kf ON t.Orgnr = kf.Orgnr
+JOIN dw.Kund k ON kf.KundforetagID = k.KundforetagID
+WHERE k.Aktiv = 'j'
+GROUP BY kf.KundforetagID
+ORDER BY COUNT(k.KundID) DESC
+
+
