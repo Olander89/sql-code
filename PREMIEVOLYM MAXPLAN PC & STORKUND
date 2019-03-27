@@ -1,0 +1,139 @@
+  -- Premievolym Sparförsäkringar Februari 2017, 2018, 2019 
+
+  SELECT
+	fsb.Namn,
+	hk.ForsakringsNr,
+	hk.Pnr,
+	pt.Produkttyp,
+	a.Affarstyp,
+	ff.Forvaltningsform,
+	hk.Varde,
+	hk.Navigera,
+	hk.Premie,
+	hk.PremieNavigera
+  FROM dw.Hist_Kapital hk
+  JOIN dw.Forsakringsbolag fsb ON hk.ForsakringsbolagID = fsb.ForsakringsbolagID
+  JOIN dw.Affarstyp a ON hk.AffarstypID = a.AffarstypID
+  JOIN dw.Produkttyp pt ON hk.ProdukttypID = pt.ProdukttypID
+  JOIN dw.Forvaltningsform ff ON hk.ForvaltningsformID = ff.ForvaltningsformID
+  WHERE hk.ForsakringsbolagID IN ('45', '-8002701','4','65','-8629972','2','67','3')
+  AND hk.AffarstypID IN ('2', '3')
+  AND hk.Datum = '2017-02-08'
+
+  SELECT
+	fsb.Namn,
+	hk.ForsakringsNr,
+	hk.Pnr,
+	pt.Produkttyp,
+	a.Affarstyp,
+	ff.Forvaltningsform,
+	hk.Varde,
+	hk.Navigera,
+	hk.Premie,
+	hk.PremieNavigera
+  FROM dw.Hist_Kapital hk
+  JOIN dw.Forsakringsbolag fsb ON hk.ForsakringsbolagID = fsb.ForsakringsbolagID
+  JOIN dw.Affarstyp a ON hk.AffarstypID = a.AffarstypID
+  JOIN dw.Produkttyp pt ON hk.ProdukttypID = pt.ProdukttypID
+  JOIN dw.Forvaltningsform ff ON hk.ForvaltningsformID = ff.ForvaltningsformID
+  WHERE hk.ForsakringsbolagID IN ('45', '-8002701','4','65','-8629972','2','67','3')
+  AND hk.AffarstypID IN ('2', '3')
+  AND hk.Datum = '2018-02-07'
+
+  SELECT
+	fsb.Namn,
+	hk.ForsakringsNr,
+	hk.Pnr,
+	pt.Produkttyp,
+	a.Affarstyp,
+	ff.Forvaltningsform,
+	hk.Varde,
+	hk.Navigera,
+	hk.Premie,
+	hk.PremieNavigera
+  FROM dw.Hist_Kapital hk
+  JOIN dw.Forsakringsbolag fsb ON hk.ForsakringsbolagID = fsb.ForsakringsbolagID
+  JOIN dw.Affarstyp a ON hk.AffarstypID = a.AffarstypID
+  JOIN dw.Produkttyp pt ON hk.ProdukttypID = pt.ProdukttypID
+  JOIN dw.Forvaltningsform ff ON hk.ForvaltningsformID = ff.ForvaltningsformID
+  WHERE hk.ForsakringsbolagID IN ('45', '-8002701','4','65','-8629972','2','67','3')
+  AND hk.AffarstypID IN ('2', '3')
+  AND hk.Datum = '2019-02-06'
+  
+  -- Risk
+  
+  SELECT
+  LEFT(f.Datering, 4) AS 'År',
+  f.Datering,
+  fsb.Namn,
+  f.ForsakringsNr,
+  f.Pnr,
+  f.ForsakringstagarTyp,
+  f.Skattekategori,
+  f.Produkttyp,
+  f.Affarstyp,
+  f.Premie
+  FROM dw.Forsakring f
+  INNER JOIN dw.Kund k      on k.Pnr = f.Pnr
+  INNER JOIN dw.Forsakringsbolag fsb ON f.ForsakringsbolagID = fsb.ForsakringsbolagID
+  WHERE f.Datering > '2016-01-01' AND f.Datering < '2019-02-01'
+  AND f.ForsakringsbolagID IN ('32', '67', '3')
+  AND f.Affarstyp IN ('SK', 'Maxplan PC')
+  AND Skattekategori = 'T'
+  AND k.Aktiv = 'j'
+  AND f.Varde = '0'
+  AND f.Status = 'Gällande'
+  ORDER BY LEFT(f.Datering, 4), Datering ASC
+  
+  -- Nyteckningar
+  
+  SELECT 
+       [StartAr]
+      ,[Forsakringsbolag]
+      ,[ForsakringsNr]
+      ,[Pnr]
+      ,[Affarstyp]
+      ,[Produkttyp]
+      ,[Arspremie]
+      ,[Kapital]
+      ,[Trad]
+      ,[Fond]
+      ,[Navigera]
+  FROM [Datawarehouse].[dbo].[Hist_Forsakring]
+  WHERE StartAr = '2016'
+  AND Affarstyp IN ('SK', 'Maxplan PC')
+  AND Forsakringsbolag IN ('Skandia', 'Spp Livförsäkring', 'SEB Trygg Liv', 'Movestic', 'Länsförsäkringar', 'Folksam', 'Danica Pension', 'AMF Pension')
+
+  SELECT 
+       [StartAr]
+      ,[Forsakringsbolag]
+      ,[ForsakringsNr]
+      ,[Pnr]
+      ,[Affarstyp]
+      ,[Produkttyp]
+      ,[Arspremie]
+      ,[Kapital]
+      ,[Trad]
+      ,[Fond]
+      ,[Navigera]
+  FROM [Datawarehouse].[dbo].[Hist_Forsakring]
+  WHERE StartAr = '2017'
+  AND Affarstyp IN ('SK', 'Maxplan PC')
+  AND Forsakringsbolag IN ('Skandia', 'Spp Livförsäkring', 'SEB Trygg Liv', 'Movestic', 'Länsförsäkringar', 'Folksam', 'Danica Pension', 'AMF Pension')
+
+  SELECT 
+       [StartAr]
+      ,[Forsakringsbolag]
+      ,[ForsakringsNr]
+      ,[Pnr]
+      ,[Affarstyp]
+      ,[Produkttyp]
+      ,[Arspremie]
+      ,[Kapital]
+      ,[Trad]
+      ,[Fond]
+      ,[Navigera]
+  FROM [Datawarehouse].[dbo].[Hist_Forsakring]
+  WHERE StartAr = '2018'
+  AND Affarstyp IN ('SK', 'Maxplan PC')
+  AND Forsakringsbolag IN ('Skandia', 'Spp Livförsäkring', 'SEB Trygg Liv', 'Movestic', 'Länsförsäkringar', 'Folksam', 'Danica Pension', 'AMF Pension')
