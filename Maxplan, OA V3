@@ -147,8 +147,8 @@ where l.xAnstal = dw.#temp1.KundID
 ==================================================================================
 --Revidering
   
-SELECT
-Namn,
+SELECT --DISTINCT
+--Namn,
 Orgnr,
 Rådgivare,
 Affärstyp,
