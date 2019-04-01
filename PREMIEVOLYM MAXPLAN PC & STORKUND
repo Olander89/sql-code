@@ -1,3 +1,33 @@
+  --Revidering 2019-04-01
+  
+    SELECT
+	fsb.Namn AS 'Försäkringsbolag',
+	hk.ForsakringsNr,
+	hk.Pnr,
+	r.Namn AS 'Rådgivare',
+	kf.Namn AS 'Företag',
+	kf.Orgnr,
+	kf.Koncern,
+	pt.Produkttyp,
+	a.Affarstyp,
+	ff.Forvaltningsform,
+	hk.Varde,
+	hk.Navigera,
+	hk.Premie,
+	hk.PremieNavigera
+  FROM dw.Hist_Kapital hk
+  JOIN dw.Forsakringsbolag fsb ON hk.ForsakringsbolagID = fsb.ForsakringsbolagID
+  JOIN dw.Affarstyp a ON hk.AffarstypID = a.AffarstypID
+  JOIN dw.Produkttyp pt ON hk.ProdukttypID = pt.ProdukttypID
+  JOIN dw.Forvaltningsform ff ON hk.ForvaltningsformID = ff.ForvaltningsformID
+  LEFT JOIN dw.Kund k ON hk.KundID = k.KundID
+  LEFT JOIN dw.Kundforetag kf ON k.KundforetagID = kf.KundforetagID
+  LEFT JOIN dw.Radgivare r ON hk.RadgivarID = r.RadgivarID
+  WHERE hk.ForsakringsbolagID IN ('45', '-8002701','4','65','-8629972','2','67','3')
+  AND hk.AffarstypID IN ('2', '3')
+  AND hk.Datum = '2017-02-08'
+  
+  
   -- Premievolym Sparförsäkringar Februari 2017, 2018, 2019 
 
   SELECT
