@@ -1,3 +1,37 @@
+  --Revidering Nyteckningar 2019-04-04
+  
+  SELECT 
+       hf.StartAr
+      ,hf.Forsakringsbolag
+      ,hf.ForsakringsNr
+      ,hf.Pnr
+      ,hf.Affarstyp
+      ,hf.Produkttyp
+	  ,t.Snittpremie
+      ,hf.Kapital
+      ,hf.Trad
+      ,hf.Fond
+      ,hf.Navigera
+  FROM [Datawarehouse].[dbo].[Hist_Forsakring] hf
+  LEFT JOIN #temp t ON hf.ForsakringsNr = t.ForsakringsNr
+  WHERE hf.StartAr = '2018'
+  AND hf.Ar = '2018'
+  AND hf.Affarstyp IN ('SK', 'Maxplan PC')
+AND Forsakringsbolag IN ('Skandia', 'Spp Livförsäkring', 'SEB Trygg Liv',
+'Movestic', 'Länsförsäkringar', 'Folksam', 'Danica Pension', 'AMF Pension')
+
+DROP TABLE #Temp
+
+SELECT ForsakringsNr, AVG(Premie) AS 'Snittpremie'
+INTO #Temp
+FROM dw.Hist_Kapital
+  WHERE ForsakringsbolagID IN ('45', '-8002701','4','65','-8629972','2','67','3')
+  AND AffarstypID IN ('2', '3')
+  AND Premie > '0'
+  AND Datum BETWEEN '2018-01-01' AND '2018-12-31'
+Group by ForsakringsNr
+
+  
   --Revidering 2019-04-01
   
     SELECT
