@@ -1,3 +1,94 @@
+    --REVIDERING PREMIEVOLYM SPARFÖRSÄKRINGAR 2019-04-08
+    
+        SELECT
+	fsb.Namn AS 'Försäkringsbolag',
+	hk.ForsakringsNr,
+	hk.Pnr,
+	r.Namn AS 'Rådgivare',
+	kf.Namn AS 'Företag',
+	kf.Orgnr,
+	kf.Koncern,
+	pt.Produkttyp,
+	a.Affarstyp,
+	ff.Forvaltningsform,
+	hk.Varde,
+	hk.Navigera,
+	hk.Premie,
+	hk.PremieNavigera,
+	f.Skattekategori
+  FROM dw.Hist_Kapital hk
+  JOIN dw.Forsakringsbolag fsb ON hk.ForsakringsbolagID = fsb.ForsakringsbolagID
+  JOIN dw.Affarstyp a ON hk.AffarstypID = a.AffarstypID
+  JOIN dw.Produkttyp pt ON hk.ProdukttypID = pt.ProdukttypID
+  JOIN dw.Forvaltningsform ff ON hk.ForvaltningsformID = ff.ForvaltningsformID
+  LEFT JOIN dw.Kund k ON hk.KundID = k.KundID
+  LEFT JOIN dw.Kundforetag kf ON k.KundforetagID = kf.KundforetagID
+  LEFT JOIN dw.Radgivare r ON hk.RadgivarID = r.RadgivarID
+  LEFT JOIN dw.Forsakring f ON hk.ForsakringsNr = f.ForsakringsNr
+  WHERE hk.ForsakringsbolagID IN ('45', '-8002701','4','65','-8629972','2','67','3')
+  AND hk.AffarstypID IN ('2', '3')
+  AND (f.Skattekategori IN ('T', 'K') OR f.Skattekategori IS NULL)
+AND hk.Datum = '2017-02-08'
+ORDER BY Skattekategori
+
+
+    -- REVIDERING NYTECKNINGAR 2019-04-08
+  
+  SELECT 
+       hf.StartAr
+      ,hf.Forsakringsbolag
+      ,hf.ForsakringsNr
+      ,hf.Pnr
+      ,hf.Affarstyp
+      ,hf.Produkttyp
+	  --,t.Snittpremie
+	  ,t.MedianDisc
+      ,hf.Kapital
+      ,hf.Trad
+      ,hf.Fond
+      ,hf.Navigera
+  FROM [Datawarehouse].[dbo].[Hist_Forsakring] hf
+  LEFT JOIN #Temp2 t ON hf.ForsakringsNr = t.ForsakringsNr
+  WHERE hf.StartAr = '2018'
+  AND hf.Ar = '2018'
+  AND hf.Affarstyp IN ('SK', 'Maxplan PC')
+AND Forsakringsbolag IN ('Skandia', 'Spp Livförsäkring', 'SEB Trygg Liv',
+'Movestic', 'Länsförsäkringar', 'Folksam', 'Danica Pension', 'AMF Pension')
+
+DROP TABLE #Temp1
+
+DROP TABLE #Temp2
+
+
+--Medelvärden
+SELECT ForsakringsNr, AVG(Premie) AS 'Snittpremie'
+INTO #Temp1
+FROM dw.Hist_Kapital
+  WHERE ForsakringsbolagID IN ('45', '-8002701','4','65','-8629972','2','67','3')
+  AND AffarstypID IN ('2', '3')
+  AND Premie > '0'
+  AND Datum BETWEEN '2016-01-01' AND '2016-12-31'
+Group by ForsakringsNr
+
+--Medianvärden
+SELECT DISTINCT hk.ForsakringsNr
+      ,PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY hk.Premie)   
+                            OVER (PARTITION BY ForsakringsNr) AS MedianDisc
+INTO #Temp2
+FROM dw.Hist_Kapital hk
+  WHERE ForsakringsbolagID IN ('45', '-8002701','4','65','-8629972','2','67','3')
+  AND AffarstypID IN ('2', '3')
+  AND Premie > '0'
+  AND Datum BETWEEN '2018-01-01' AND '2018-12-31'
+
+
+  SELECT * FROM dw.Hist_Kapital
+  WHERE ForsakringsbolagID IN ('45', '-8002701','4','65','-8629972','2','67','3')
+  AND AffarstypID IN ('2', '3')
+  AND Premie > '0'
+  AND Datum BETWEEN '2017-01-01' AND '2017-12-31'
+  AND ForsakringsNr = 'S122371-9254-12'
+  
   --Revidering Nyteckningar 2019-04-04
   
   SELECT 
