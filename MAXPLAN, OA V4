@@ -111,3 +111,25 @@ where l.xAnstal = dw.#Temp1.KundID
 	Sjuk,
 	Trappa
  FROM #Temp1
+
+--REVIDERING
+
+ SELECT DISTINCT
+	MIN(kf.Namn) AS 'Företag',
+	t.Orgnr,
+	t.Rådgivare,
+	t.FörsäkringsNr,
+	t.Affärstyp,
+	t.Skattekategori,
+	t.Försäkringsbolag,
+	t.Premie,
+	t.Värde,
+	t.Trad,
+	t.Fond,
+	t.Navigera,
+	t.Sjuk,
+	t.Trappa
+FROM #Temp1 t
+LEFT JOIN dw.Kundforetag kf ON t.Orgnr = kf.Orgnr
+GROUP BY t.Orgnr,t.Rådgivare,t.FörsäkringsNr,t.Affärstyp,t.Skattekategori,t.Försäkringsbolag,t.Premie,t.Värde,t.Trad,t.Fond,t.Navigera,t.Sjuk,t.Trappa
+ORDER BY FörsäkringsNr
