@@ -133,3 +133,151 @@ FROM #Temp1 t
 LEFT JOIN dw.Kundforetag kf ON t.Orgnr = kf.Orgnr
 GROUP BY t.Orgnr,t.Rådgivare,t.FörsäkringsNr,t.Affärstyp,t.Skattekategori,t.Försäkringsbolag,t.Premie,t.Värde,t.Trad,t.Fond,t.Navigera,t.Sjuk,t.Trappa
 ORDER BY FörsäkringsNr
+
+
+============================================
+
+CREATE TABLE #Temp1
+(
+KundID VARCHAR(25),
+KundforetagID VARCHAR(25),
+Orgnr CHAR(10),
+Rådgivare VARCHAR(50),
+FörsäkringsNr VARCHAR(25),
+Affärstyp CHAR(10),
+Skattekategori CHAR(1),
+Försäkringsbolag VARCHAR(25),
+Premie INT,
+Värde INT,
+Trad INT,
+Fond INT,
+Navigera INT,
+Sjuk CHAR(1),
+Trappa CHAR(1)
+)
+
+SELECT * FROM #Temp1
+
+DROP TABLE #Temp1
+
+INSERT INTO #Temp1 (KundID, KundforetagID, Orgnr, Rådgivare, FörsäkringsNr, Affärstyp, Skattekategori, Försäkringsbolag, Premie, Värde, Trad, Fond, Navigera, Sjuk)
+
+SELECT DISTINCT
+asd2.KundID,
+asd2.KundforetagID,
+asd1.Orgnr,
+asd2.Rådgivare,
+asd2.FörsäkringsNr,
+asd2.Affärstyp,
+asd2.Skattekategori,
+asd2.Försäkringsbolag,
+asd2.Premie,
+asd2.Värde,
+asd2.Trad,
+asd2.Fond,
+asd2.Navigera,
+CASE WHEN asd2.Sjuk = 'n' THEN ''
+	 WHEN asd2.Sjuk = 'j' THEN 'j' 
+	 WHEN asd2.Sjuk IS NULL THEN ''
+END AS Sjuk
+FROM
+(SELECT DISTINCT kf.Orgnr, kf.Namn
+FROM dw.Kundforetag kf
+WHERE kf.Aktiv = 'j'
+-- Plocka bort IBM
+AND kf.Orgnr != '5560266883'
+-- Kontrollera ersättning
+AND (EXISTS (select 1 from dw.Prov_Provision p where p.Period  BETWEEN '2018-01' AND '2019-02' AND p.ForsakringstagareOrgnr = kf.Orgnr AND BolagID = '1')
+OR EXISTS (select 1 from dw.Arvode ar where ar.Period BETWEEN '2018-01' and '2019-02' AND ar.Orgnr = kf.Orgnr))) asd1
+
+JOIN
+
+(SELECT
+f.KundID				AS 'KundID',
+kf.KundforetagID		AS 'KundforetagID',
+f.ForsakringstagareNr	AS 'Orgnr',
+r.Namn					AS 'Rådgivare',
+f.ForsakringsNr			AS 'FörsäkringsNr',
+f.Affarstyp				AS 'Affärstyp',
+f.Skattekategori		AS 'Skattekategori',
+fb.Namn					AS 'Försäkringsbolag',
+f.Premie				AS 'Premie',
+f.Varde					AS 'Värde',
+f.Trad					AS 'Trad',
+f.Fond					AS 'Fond',
+f.Navigera				AS 'Navigera',
+f.Sjuk					AS 'Sjuk'
+FROM dw.Forsakring f
+JOIN dw.Forsakringsbolag fb ON f.ForsakringsbolagID = fb.ForsakringsbolagID
+JOIN dw.Kund k ON f.KundID = k.KundID
+JOIN dw.Kundforetag kf ON k.KundforetagID = kf.KundforetagID
+LEFT JOIN dw.Radgivare r ON k.RadgivarID = r.RadgivarID
+WHERE f.Affarstyp = 'Maxplan'
+OR f.Affarstyp IS NULL
+AND f.Produkttyp NOT IN ('Koll. förmånsbaserad', 'Koll. kompletterande', 'Koll. odefinierad', 'Koll. premiebaserad', 'Privat pension')
+AND f.Status = 'Gällande'
+AND k.Aktiv = 'j'
+AND f.Spar = 'j') asd2
+ON asd1.Orgnr = asd2.Orgnr
+WHERE asd1.Orgnr NOT IN (SELECT DISTINCT f.ForsakringstagareNr FROM dw.Forsakring f JOIN dw.Kund k ON f.KundID = k.KundID
+							WHERE f.Status = 'Gällande' AND f.Spar = 'j' AND f.Affarstyp IN ('Maxplan PC', 'SK')
+							AND f.Produkttyp NOT IN ('Koll. förmånsbaserad', 'Koll. kompletterande', 'Koll. odefinierad', 'Koll. premiebaserad', 'Privat pension')
+							AND k.Aktiv = 'j' AND f.Premie > '0')
+AND asd2.Försäkringsbolag IN ('AMF Pension', 'Danica Pension', 'Folksam', 'Länsförsäkringar', 'Movestic', 'SEB Trygg Liv', 'Skandia', 'SPP Livförsäkring') -- Avgränsa till dessa Försäkringsbolag
+AND asd2.Premie >'0'
+AND asd2.Värde != asd2.Navigera
+ORDER BY asd2.FörsäkringsNr
+
+
+update #Temp1
+set Trappa = case when pp.xForeta = #Temp1.KundforetagID and pp.Plantyp in (6, 7, 10) then 'j' else '' end
+from stage.pml_Loner l
+left outer join stage.pml_Premieplaner pp on pp.xID = l.xPremie
+where l.xAnstal = dw.#Temp1.KundID
+  and l.Datum = (select max(datum) from stage.pml_Loner l2 where l2.xAnstal = l.xAnstal)
+
+
+
+ SELECT DISTINCT
+	Orgnr,
+	Rådgivare,
+	FörsäkringsNr,
+	Affärstyp,
+	Skattekategori,
+	Försäkringsbolag,
+	Premie,
+	Värde,
+	Trad,
+	Fond,
+	Navigera,
+	Sjuk,
+	Trappa
+ FROM #Temp1
+
+--REVIDERING OBS BEHÖVER JOINA MED PML_PROD.pml.dbo.dw_vy_Sjukbolag FÖR ATT PLOCKA PREMIEPLAN OCH SJUKBOLAG
+
+ SELECT DISTINCT
+	MIN(kf.Namn) AS 'Företag',
+	t.KundforetagID,
+	t.Orgnr,
+	t.Rådgivare,
+	t.FörsäkringsNr,
+	t.Affärstyp,
+	t.Skattekategori,
+	t.Försäkringsbolag,
+	t.Premie,
+	t.Värde,
+	t.Trad,
+	t.Fond,
+	t.Navigera,
+	t.Sjuk,
+	t.Trappa
+FROM #Temp1 t
+LEFT JOIN dw.Kundforetag kf ON t.Orgnr = kf.Orgnr
+LEFT JOIN stage.linda_Benefit b ON t.FörsäkringsNr = b.policyNumber -- FORTSÄTT TITTA PÅ DETTA
+JOIN dw.Moment mo ON b.xid = mo.ForsakringsID
+WHERE t.Affärstyp = 'Maxplan'
+GROUP BY t.KundforetagID,t.Orgnr,t.Rådgivare,t.FörsäkringsNr,t.Affärstyp,t.Skattekategori,t.Försäkringsbolag,t.Premie,t.Värde,t.Trad,t.Fond,t.Navigera,t.Sjuk,t.Trappa
+ORDER BY FörsäkringsNr
+
+--22388
