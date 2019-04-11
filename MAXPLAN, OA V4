@@ -281,3 +281,9 @@ GROUP BY t.KundforetagID,t.Orgnr,t.Rådgivare,t.FörsäkringsNr,t.Affärstyp,t.S
 ORDER BY FörsäkringsNr
 
 --22388
+
+
+SELECT *
+  FROM [Datawarehouse].[stage].[linda_Benefit] b
+  JOIN dw.Moment mo ON b.xid = mo.ForsakringsID
+  WHERE mo.Momenttyp = 'Sjuk'
