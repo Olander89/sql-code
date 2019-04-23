@@ -1,20 +1,20 @@
 --2019-04-23
 
 SELECT DISTINCT
-	a.xID AS 'KundID',
-	a.Personnummer_2 AS 'Pnr',
-	a.xFORETA AS 'KundforetagID',
-	kf.Orgnr,
+	a.xID 							AS 'KundID',
+	a.Personnummer_2 					AS 'Pnr',
+	a.xFORETA 						AS 'KundforetagID',
+	kf.Orgnr						AS 'Orgnr',
 	CASE
 		WHEN a.financialExperience = 'NONE'		THEN 'Ingen'
 		WHEN a.financialExperience = 'SOME'		THEN 'Liten'
-		WHEN a.financialExperience = 'AVERAGE'	THEN 'Medel'
-		WHEN a.financialExperience = 'LARGE'	THEN 'Stor'
+		WHEN a.financialExperience = 'AVERAGE'		THEN 'Medel'
+		WHEN a.financialExperience = 'LARGE'		THEN 'Stor'
 	END AS 'Erfarenhet',
 	CASE
-		WHEN a.riskLevel = 'LOW'		THEN 'Låg'
-		WHEN a.riskLevel = 'AVERAGE'	THEN 'Medel'
-		WHEN a.riskLevel = 'HIGH'		THEN 'Hög'
+		WHEN a.riskLevel = 'LOW'			THEN 'Låg'
+		WHEN a.riskLevel = 'AVERAGE'			THEN 'Medel'
+		WHEN a.riskLevel = 'HIGH'			THEN 'Hög'
 	END AS 'Risknivå'
 FROM stage.pml_Anstallda a
 JOIN dw.Kundforetag kf ON a.xFORETA = kf.KundforetagID
