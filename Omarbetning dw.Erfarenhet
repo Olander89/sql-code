@@ -1,0 +1,23 @@
+--2019-04-23
+
+SELECT DISTINCT
+	a.xID AS 'KundID',
+	a.Personnummer_2 AS 'Pnr',
+	a.xFORETA AS 'KundforetagID',
+	kf.Orgnr,
+	CASE
+		WHEN a.financialExperience = 'NONE'		THEN 'Ingen'
+		WHEN a.financialExperience = 'SOME'		THEN 'Liten'
+		WHEN a.financialExperience = 'AVERAGE'	THEN 'Medel'
+		WHEN a.financialExperience = 'LARGE'	THEN 'Stor'
+	END AS 'Erfarenhet',
+	CASE
+		WHEN a.riskLevel = 'LOW'		THEN 'Låg'
+		WHEN a.riskLevel = 'AVERAGE'	THEN 'Medel'
+		WHEN a.riskLevel = 'HIGH'		THEN 'Hög'
+	END AS 'Risknivå'
+FROM stage.pml_Anstallda a
+JOIN dw.Kundforetag kf ON a.xFORETA = kf.KundforetagID
+WHERE EXISTS (SELECT 1 FROM dw.Kund k WHERE k.KundID = a.xID) --531.661 
+AND a.financialExperience IS NOT NULL -- 126.135
+AND a.riskLevel IS NOT NULL -- 21.869
