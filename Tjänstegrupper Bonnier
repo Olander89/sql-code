@@ -1,0 +1,40 @@
+/****** Script for SelectTopNRows command from SSMS  ******/
+
+
+SELECT KundID, KundforetagID, RadgivarID, PlaceringsradgivarID, AdministratorID, Pnr, Namn, Fornamn, Efternamn, Adress, Postnr, Ort, Hemtelefon, Arbetstelefon, Mobiltelefon, Epostadress, Avdelning, Kostnadsstalle, Anstallningsnr, Kon, Alder, Fodelsedatum, Avtalsomrade, Skotselfullmakt, Arslon, ForegaendeArslon, Lonedatum, Procentplan, Sjukskriven, Tjanstledig, Foraldraledig, Aktiv, PMLStatus, Prospekt, PEP, Lvxl, Upplagd
+  INTO #Temp
+  FROM [Datawarehouse].[dw].[Kund]
+  WHERE KundforetagID IN ('-65876445','-65404311','-55074259','-55111707','-54299337','-54871274','-54975610','-53647454','-49389607','-52449595','-44664241','-39899448','-48450718','-39243838',
+'-36342332','-31876079','-30640325','-32370255','-25284769','-29239074','-39685787','-39375760','-25691256','-25699250','-43085597','-20295452','-39821771','-12001090','-32152607','-9701803',
+'-13092228','-12823289','-55199677','-10693597','-15242434','-14444736','-8442413','-9126588','-31875962','-10032893','-37378194','-51386','-5423164','-5449266','-1250219','-4842840','-50127','-4512136','-1500187',
+'-220213','-4883653','-4315622','-50733','-6080303','-5187855','-50711')
+
+
+DROP TABLE #Temp
+DROP TABLE #Temp1
+DROP TABLE #Temp2
+DROP TABLE #Temp3
+
+
+SELECT KundID, KundforetagID, RadgivarID, PlaceringsradgivarID, AdministratorID, Pnr, Namn, Fornamn, Efternamn, Adress, Postnr, Ort, Hemtelefon, Arbetstelefon, Mobiltelefon, Epostadress, Avdelning, Kostnadsstalle, Anstallningsnr, Kon, Alder, Fodelsedatum, Avtalsomrade, Skotselfullmakt, Arslon, ForegaendeArslon, Lonedatum, Procentplan, Sjukskriven, Tjanstledig, Foraldraledig, Aktiv, PMLStatus, Prospekt, PEP, Lvxl, Upplagd
+  FROM [Datawarehouse].[dw].[Kund]
+  WHERE KundforetagID IN ('-65876445','-65404311','-55074259','-55111707','-54299337','-54871274','-54975610','-53647454','-49389607','-52449595','-44664241','-39899448','-48450718','-39243838',
+'-36342332','-31876079','-30640325','-32370255','-25284769','-29239074','-39685787','-39375760','-25691256','-25699250','-43085597','-20295452','-39821771','-12001090','-32152607','-9701803',
+'-13092228','-12823289','-55199677','-10693597','-15242434','-14444736','-8442413','-9126588','-31875962','-10032893','-37378194','-51386','-5423164','-5449266','-1250219','-4842840','-50127','-4512136','-1500187',
+'-220213','-4883653','-4315622','-50733','-6080303','-5187855','-50711')
+--AND KundID = '-54242703'
+
+
+SELECT *
+INTO #Temp
+FROM dw.Tjanstegrupp tg WHERE tg.KundID IN (SELECT t.KundID FROM #Temp t)
+
+SELECT *
+INTO #Temp1
+FROM [Datawarehouse].[stage].[linda_OccupationalGroupMembership] ogm
+WHERE ogm.ssn IN (SELECT t.Pnr FROM #Temp t)
+
+SELECT *
+FROM [Datawarehouse].[stage].[linda_OccupationalGroup] og
+WHERE og.id IN (SELECT t.occupationalGroupId FROM #Temp1 t)
+
