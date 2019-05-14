@@ -1,0 +1,14 @@
+  SELECT 
+       hf.StartAr
+      ,hf.Forsakringsbolag
+      ,hf.ForsakringsNr
+	  ,f.ForsakringstagareNr AS 'ForsakringstagareNr/OrgNr'
+      ,hf.Affarstyp
+      ,hf.Produkttyp
+  FROM [Datawarehouse].[dbo].[Hist_Forsakring] hf
+  JOIN dw.Forsakring f ON hf.ForsakringsNr = f.ForsakringsNr
+  WHERE hf.StartAr = '2018'
+  AND hf.Ar = '2018'
+  AND hf.Affarstyp IN ('Maxplan PC')
+AND Forsakringsbolag IN ('Skandia', 'Spp Livförsäkring', 'SEB Trygg Liv',
+'Movestic', 'Länsförsäkringar', 'Folksam', 'Danica Pension', 'AMF Pension')
