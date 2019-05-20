@@ -5,10 +5,14 @@
 	  ,f.ForsakringstagareNr AS 'ForsakringstagareNr/OrgNr'
       ,hf.Affarstyp
       ,hf.Produkttyp
+	  ,f.Premie
   FROM [Datawarehouse].[dbo].[Hist_Forsakring] hf
   JOIN dw.Forsakring f ON hf.ForsakringsNr = f.ForsakringsNr
   WHERE hf.StartAr = '2018'
   AND hf.Ar = '2018'
   AND hf.Affarstyp IN ('Maxplan PC')
+  AND f.Premie > '0'
+  AND f.Spar = 'j'
+  AND f.Produkttyp NOT IN ('Koll. förmånsbaserad', 'Koll. kompletterande', 'Koll. odefinierad', 'Koll. premiebaserad', 'Privat pension')
 AND Forsakringsbolag IN ('Skandia', 'Spp Livförsäkring', 'SEB Trygg Liv',
 'Movestic', 'Länsförsäkringar', 'Folksam', 'Danica Pension', 'AMF Pension')
