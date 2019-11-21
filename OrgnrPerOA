@@ -1,0 +1,8 @@
+SELECT DISTINCT kf.Orgnr, kf.Namn AS 'Företag', r.Team, r.Namn AS 'Radgivare'
+FROM dw.Forsakring f
+JOIN dw.Kundforetag kf ON f.ForsakringstagareNr = kf.Orgnr
+JOIN dw.Radgivare r ON kf.RadgivarID = r.RadgivarID
+WHERE f.Affarstyp IS NULL
+AND f.Status = 'Gällande'
+AND kf.Aktiv = 'j'
+AND kf.Namn NOT LIKE '%test%'
