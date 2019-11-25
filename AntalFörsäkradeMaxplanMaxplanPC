@@ -1,0 +1,25 @@
+CREATE TABLE #Temp (
+Orgnr CHAR(10),
+Antal INT
+)
+
+INSERT INTO #Temp (Orgnr, Antal)
+SELECT * FROM(
+SELECT f.ForsakringstagareNr, COUNT(ForsakringstagareNr) AS 'Antal Maxplan'
+FROM dw.Forsakring f
+JOIN dw.Kundforetag kf ON f.ForsakringstagareNr = kf.Orgnr
+WHERE f.Affarstyp LIKE 'Maxplan PC'
+AND f.Status = 'Gällande'
+AND kf.Aktiv = 'j'
+GROUP BY f.ForsakringstagareNr) a
+
+SELECT t.Orgnr, kf.Namn, t.Antal, r.Namn AS 'Rådgivare', a.Namn AS 'Administratör'
+FROM dw.Kundforetag kf
+JOIN #temp t ON kf.Orgnr = t.Orgnr
+JOIN dw.Radgivare r ON kf.RadgivarID = r.RadgivarID
+JOIN dw.Administrator a ON kf.AdministratorID = a.AdministratorID
+WHERE t.Antal >= 20
+AND t.Antal <= 100
+ORDER BY t.Orgnr
+
+DROP TABLE #Temp
