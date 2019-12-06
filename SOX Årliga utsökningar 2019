@@ -1,0 +1,224 @@
+--Capio / Team Samuelsson
+
+select f.koncern, SUM(f.Premie)
+from sox.Forsakring f
+WHERE f.koncern = 'Capio'
+GROUP BY f.Koncern
+
+
+-- Lista alla försäkringar
+select * from sox.forsakring f
+where exists (select 1 from sox.orgnr o
+              where o.Orgnr = f.Orgnr
+                and o.Koncern = 'Capio');
+
+--> 1590 (Dec 2019)
+
+
+-- Kolla vilka av dessa som har genererat provision
+select * from sox.forsakring f
+where exists (select 1 from sox.orgnr o
+              where o.Orgnr = f.Orgnr
+                and o.Koncern = 'Capio'
+				and o.TeamID = 130)
+  and exists (select 1 from sox.provision p
+              where p.Forsakringsbolag = f.Forsakringsbolag
+                and p.ForsakringsNr = f.ForsakringsNr);
+
+--> 902 (Dec 2019)
+
+
+-- Skapa urvalslista
+select f.Forsakringsbolag,
+       f.ForsakringsNr,
+       f.Affarstyp,
+       f.Produkttyp,
+       f.Tjp,
+       f.Lvxl,
+       f.Sjukvard,
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Spar')            then 'j' else 'n' end as 'OLD',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Premiebefrielse') then 'j' else 'n' end as 'PBF',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Sjuk')            then 'j' else 'n' end as 'SJU',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Sjukvård')        then 'j' else 'n' end as 'SJV',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Dödsfall')        then 'j' else 'n' end as 'EFT',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Invaliditet')     then 'j' else 'n' end as 'INV',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Olycksfall')      then 'j' else 'n' end as 'OLY',
+	   f.Premie
+from sox.forsakring f
+where exists (select 1 from sox.orgnr o
+              where o.Orgnr = f.Orgnr
+                and o.Koncern = 'Capio'
+				and o.TeamID = 130)
+  and exists (select 1 from sox.provision p
+              where p.Forsakringsbolag = f.Forsakringsbolag
+                and p.ForsakringsNr = f.ForsakringsNr)
+order by 1, 15 DESC;
+
+--> 902 (Dec 2019)
+
+
+
+-- Telenor Sverige AB / Team Lund
+
+select f.koncern, SUM(f.Premie)
+from sox.Forsakring f
+WHERE f.koncern = 'Telenor Sverige AB'
+GROUP BY f.Koncern
+
+-- Lista alla försäkringar
+select * from sox.forsakring f
+where exists (select 1 from sox.orgnr o
+              where o.Orgnr = f.Orgnr
+                and o.Koncern = 'Telenor Sverige AB');
+
+--> 1321 (Dec 2019)
+
+
+-- Kolla vilka av dessa som har genererat provision
+select * from sox.forsakring f
+where exists (select 1 from sox.orgnr o
+              where o.Orgnr = f.Orgnr
+                and o.Koncern = 'Telenor Sverige AB'
+				and o.TeamID = 68)
+  and exists (select 1 from sox.provision p
+              where p.Forsakringsbolag = f.Forsakringsbolag
+                and p.ForsakringsNr = f.ForsakringsNr);
+
+--> 787 (Dec 2019)
+
+
+-- Skapa urvalslista
+select f.Forsakringsbolag,
+       f.ForsakringsNr,
+       f.Affarstyp,
+       f.Produkttyp,
+       f.Tjp,
+       f.Lvxl,
+       f.Sjukvard,
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Spar')            then 'j' else 'n' end as 'OLD',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Premiebefrielse') then 'j' else 'n' end as 'PBF',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Sjuk')            then 'j' else 'n' end as 'SJU',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Sjukvård')        then 'j' else 'n' end as 'SJV',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Dödsfall')        then 'j' else 'n' end as 'EFT',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Invaliditet')     then 'j' else 'n' end as 'INV',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Olycksfall')      then 'j' else 'n' end as 'OLY',
+	   f.Premie
+from sox.forsakring f
+where exists (select 1 from sox.orgnr o
+              where o.Orgnr = f.Orgnr
+                and o.Koncern = 'Telenor Sverige AB'
+				and o.TeamID = 68)
+  and exists (select 1 from sox.provision p
+              where p.Forsakringsbolag = f.Forsakringsbolag
+                and p.ForsakringsNr = f.ForsakringsNr)
+order by 1, 15 DESC;
+
+--> 787 (Dec 2019)
+
+
+
+----------------------------------------------------------------------------------
+-- Sista registrerade premie per försäkring varje månad
+----------------------------------------------------------------------------------
+
+SELECT sub2.Forsakringsbolag, sub2.ForsakringsNr, sub2.Affarstyp, sub2.Produkttyp, sub2.Tjp, sub2.Lvxl, sub2.Sjukvard, sub2.OLD, sub2.PBF, sub2.SJU, sub2.SJV,
+sub2.EFT, sub2.INV, sub2.OLY, MAX(sub2.PremieJanuari) AS 'PremieJanuari', MAX(sub2.PremieFebruari) AS 'PremieFebruari', MAX(sub2.PremieMars) AS 'PremieMars',
+MAX(sub2.PremieApril) AS 'PremieApril', MAX(sub2.PremieMaj) AS 'PremieMaj', MAX(sub2.PremieJuni) AS 'PremieJuni', MAX(sub2.PremieJuli) AS 'PremieJuli',
+MAX(sub2.PremieAugusti) AS 'PremieAugusti', MAX(sub2.PremieSeptember) AS 'PremieSeptember', MAX(sub2.PremieOktober) AS 'PremieOktober'
+FROM (SELECT sub.Forsakringsbolag, sub.ForsakringsNr, sub.Affarstyp, sub.Produkttyp, sub.Tjp, sub.Lvxl, sub.Sjukvard, sub.OLD, sub.PBF, sub.SJU, sub.SJV,
+sub.EFT, sub.INV, sub.OLY,
+CASE WHEN RowRank = '1' AND Datum LIKE '%2019-01%' THEN sub.Premie END AS 'PremieJanuari',
+CASE WHEN RowRank = '1' AND Datum LIKE '%2019-02%' THEN sub.Premie END AS 'PremieFebruari',
+CASE WHEN RowRank = '1' AND Datum LIKE '%2019-03%' THEN sub.Premie END AS 'PremieMars',
+CASE WHEN RowRank = '1' AND Datum LIKE '%2019-04%' THEN sub.Premie END AS 'PremieApril',
+CASE WHEN RowRank = '1' AND Datum LIKE '%2019-05%' THEN sub.Premie END AS 'PremieMaj',
+CASE WHEN RowRank = '1' AND Datum LIKE '%2019-06%' THEN sub.Premie END AS 'PremieJuni',
+CASE WHEN RowRank = '1' AND Datum LIKE '%2019-07%' THEN sub.Premie END AS 'PremieJuli',
+CASE WHEN RowRank = '1' AND Datum LIKE '%2019-08%' THEN sub.Premie END AS 'PremieAugusti',
+CASE WHEN RowRank = '1' AND Datum LIKE '%2019-09%' THEN sub.Premie END AS 'PremieSeptember',
+CASE WHEN RowRank = '1' AND Datum LIKE '%2019-10%' THEN sub.Premie END AS 'PremieOktober'
+FROM (select f.Forsakringsbolag,
+       f.ForsakringsNr,
+       f.Affarstyp,
+       f.Produkttyp,
+       f.Tjp,
+       f.Lvxl,
+       f.Sjukvard,
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Spar')            then 'j' else 'n' end as 'OLD',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Premiebefrielse') then 'j' else 'n' end as 'PBF',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Sjuk')            then 'j' else 'n' end as 'SJU',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Sjukvård')        then 'j' else 'n' end as 'SJV',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Dödsfall')        then 'j' else 'n' end as 'EFT',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Invaliditet')     then 'j' else 'n' end as 'INV',
+       case when exists (select 1 from dw.Moment m where m.ForsakringsID = f.ForsakringsID and m.Momenttyp = 'Olycksfall')      then 'j' else 'n' end as 'OLY',
+	   hk.Premie,
+	   hk.Datum AS 'Datum',
+	   ROW_NUMBER() OVER (PARTITION BY f.ForsakringsNr, Month(Datum) ORDER BY Datum DESC) AS 'RowRank'
+from sox.forsakring f
+LEFT JOIN dw.Hist_Kapital hk ON f.ForsakringsNr = hk.ForsakringsNr
+where exists (select 1 from sox.orgnr o
+              where o.Orgnr = f.Orgnr
+                and o.Koncern = 'Capio'
+				and o.TeamID = 130)
+  and exists (select 1 from sox.provision p
+              where p.Forsakringsbolag = f.Forsakringsbolag
+                and p.ForsakringsNr = f.ForsakringsNr)
+				AND Datum > '2019-01-01') sub) sub2
+				GROUP BY sub2.Forsakringsbolag, sub2.ForsakringsNr, sub2.Affarstyp, sub2.Produkttyp, sub2.Tjp, sub2.Lvxl, sub2.Sjukvard, sub2.OLD, sub2.PBF, sub2.SJU, sub2.SJV,
+				sub2.EFT, sub2.INV, sub2.OLY
+				ORDER BY 1, 24 DESC
+
+----------------------------------------------------------------------------------
+-- ÅrsIntäkt och premier för två månader
+----------------------------------------------------------------------------------
+				
+SELECT
+sub2.Foretag,
+sub2.Orgnr,
+sub2.Forsakringsbolag,
+sub2.ForsakringsNr,
+sub2.Affarstyp,
+sub2.Produkttyp,
+sub2.Tjp,
+sub2.Lvxl,
+sub2.Sjukvard,
+sub2.Intakt,
+MAX(sub2.PremieApril) AS 'PremieApril', MAX(sub2.PremieAugusti) AS 'PremieAugusti'
+FROM (SELECT
+		sub.Foretag,
+		sub.Orgnr,
+		sub.Forsakringsbolag,
+		sub.ForsakringsNr,
+		sub.Affarstyp,
+		sub.Produkttyp,
+		sub.Tjp,
+		sub.Lvxl,
+		sub.Sjukvard,
+		sub.Intakt,
+		CASE WHEN RowRank = '1' AND Datum LIKE '%2019-04%' THEN sub.Premie END AS 'PremieApril',
+		CASE WHEN RowRank = '1' AND Datum LIKE '%2019-08%' THEN sub.Premie END AS 'PremieAugusti'
+		FROM (SELECT
+				o.Foretag,
+				o.Orgnr,
+				f.Forsakringsbolag,
+				f.ForsakringsNr,
+				f.Affarstyp,
+				f.Produkttyp,
+				f.Tjp,
+				f.Lvxl,
+				f.Sjukvard,
+				o.Intakt,
+				hk.Premie,
+				hk.Datum AS 'Datum',
+				ROW_NUMBER() OVER (PARTITION BY f.ForsakringsNr, Month(Datum) ORDER BY Datum DESC) AS 'RowRank'
+				FROM sox.forsakring f
+				LEFT JOIN dw.Hist_Kapital hk ON f.ForsakringsNr = hk.ForsakringsNr
+				LEFT JOIN sox.orgnr o ON f.Orgnr = o.Orgnr
+				WHERE EXISTS (SELECT 1 FROM sox.provision p
+								WHERE p.Forsakringsbolag = f.Forsakringsbolag
+									AND p.ForsakringsNr = f.ForsakringsNr)
+									AND Datum > '2019-01-01') sub) sub2
+WHERE Affarstyp = 'SK'
+OR Affarstyp = 'Maxplan PC'
+GROUP BY sub2.Foretag, sub2.Orgnr, sub2.Forsakringsbolag, sub2.ForsakringsNr, sub2.Affarstyp, sub2.Produkttyp, sub2.Tjp, sub2.Lvxl, sub2.Sjukvard, sub2.Intakt
+ORDER BY 10 DESC
