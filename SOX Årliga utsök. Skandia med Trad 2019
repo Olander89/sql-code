@@ -1,0 +1,55 @@
+BEHÖVER BEARBETAS YTTERLIGARE
+================================
+SELECT
+sub2.Foretag,
+sub2.Orgnr,
+sub2.Forsakringsbolag,
+sub2.ForsakringsNr,
+sub2.Affarstyp,
+sub2.Produkttyp,
+sub2.Tjp,
+sub2.Lvxl,
+sub2.Sjukvard,
+sub2.Intakt,
+MAX(sub2.FondPremieApril) AS 'FondPremieApril', MAX(sub2.FondPremieAugusti) AS 'FondPremieAugusti', MAX(sub2.TradPremieApril) AS 'TradPremieApril', MAX(sub2.TradPremieAugusti) AS 'TradPremieAugusti'
+FROM (SELECT
+		sub.Foretag,
+		sub.Orgnr,
+		sub.Forsakringsbolag,
+		sub.ForsakringsNr,
+		sub.Affarstyp,
+		sub.Produkttyp,
+		sub.Tjp,
+		sub.Lvxl,
+		sub.Sjukvard,
+		sub.Intakt,
+		CASE WHEN RowRank = '1' AND ForvaltningsformID = '2' AND Datum LIKE '%2019-04%' THEN sub.Premie END AS 'FondPremieApril',
+		CASE WHEN RowRank = '1' AND ForvaltningsformID = '2'AND Datum LIKE '%2019-08%'  THEN sub.Premie END AS 'FondPremieAugusti',
+		CASE WHEN RowRank = '2' AND ForvaltningsformID = '1' AND Datum LIKE '%2019-04%' THEN sub.Premie END AS 'TradPremieApril',
+		CASE WHEN RowRank = '2' AND ForvaltningsformID = '1' AND Datum LIKE '%2019-08%' THEN sub.Premie END AS 'TradPremieAugusti'
+		FROM (SELECT
+				o.Foretag,
+				o.Orgnr,
+				f.Forsakringsbolag,
+				f.ForsakringsNr,
+				f.Affarstyp,
+				f.Produkttyp,
+				f.Tjp,
+				f.Lvxl,
+				f.Sjukvard,
+				o.Intakt,
+				hk.Premie,
+				hk.Datum AS 'Datum',
+				hk.ForvaltningsformID,
+				ROW_NUMBER() OVER (PARTITION BY f.ForsakringsNr, Month(Datum) ORDER BY Datum DESC) AS 'RowRank'
+				FROM sox.forsakring f
+				LEFT JOIN dw.Hist_Kapital hk ON f.ForsakringsNr = hk.ForsakringsNr
+				LEFT JOIN sox.orgnr o ON f.Orgnr = o.Orgnr
+				WHERE EXISTS (SELECT 1 FROM sox.provision p
+								WHERE p.Forsakringsbolag = f.Forsakringsbolag
+									AND p.ForsakringsNr = f.ForsakringsNr)
+									AND Datum > '2019-01-01') sub) sub2
+WHERE Affarstyp = 'SK'
+OR Affarstyp = 'Maxplan PC'
+GROUP BY sub2.Foretag, sub2.Orgnr, sub2.Forsakringsbolag, sub2.ForsakringsNr, sub2.Affarstyp, sub2.Produkttyp, sub2.Tjp, sub2.Lvxl, sub2.Sjukvard, sub2.Intakt
+ORDER BY 10 DESC
