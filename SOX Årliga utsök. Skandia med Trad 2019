@@ -1,4 +1,4 @@
-BEHÖVER BEARBETAS YTTERLIGARE
+MED TRAD & FOND PREMIE SEPARAT (SKANDIA -_-)
 ================================
 SELECT
 sub2.Foretag,
@@ -23,10 +23,10 @@ FROM (SELECT
 		sub.Lvxl,
 		sub.Sjukvard,
 		sub.Intakt,
-		CASE WHEN RowRank = '1' AND ForvaltningsformID = '2' AND Datum LIKE '%2019-04%' THEN sub.Premie END AS 'FondPremieApril',
-		CASE WHEN RowRank = '1' AND ForvaltningsformID = '2'AND Datum LIKE '%2019-08%'  THEN sub.Premie END AS 'FondPremieAugusti',
-		CASE WHEN RowRank = '2' AND ForvaltningsformID = '1' AND Datum LIKE '%2019-04%' THEN sub.Premie END AS 'TradPremieApril',
-		CASE WHEN RowRank = '2' AND ForvaltningsformID = '1' AND Datum LIKE '%2019-08%' THEN sub.Premie END AS 'TradPremieAugusti'
+		CASE WHEN  ForvaltningsformID = '2' AND Datum LIKE '%2019-04-2%' THEN sub.Premie END AS 'FondPremieApril',
+		CASE WHEN  ForvaltningsformID = '2'AND Datum LIKE '%2019-08-2%'  THEN sub.Premie END AS 'FondPremieAugusti',
+		CASE WHEN  ForvaltningsformID = '1' AND Datum LIKE '%2019-04-2%' THEN sub.Premie END AS 'TradPremieApril',
+		CASE WHEN  ForvaltningsformID = '1' AND Datum LIKE '%2019-08-2%' THEN sub.Premie END AS 'TradPremieAugusti'
 		FROM (SELECT
 				o.Foretag,
 				o.Orgnr,
