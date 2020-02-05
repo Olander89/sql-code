@@ -1,0 +1,18 @@
+SELECT a.Namn, a.Team, a.[Antal Möten], b.Snitt AS 'DKI-Snitt' FROM
+
+(SELECT r.Namn, r.RadgivarID, t.Team, COUNT(dm.RadgivarID) AS 'Antal Möten'
+  FROM [Datawarehouse].[dw].[DokumenteratMote] dm
+  JOIN dw.Radgivare r ON dm.RadgivarID = r.RadgivarID
+  JOIN dw.Team t ON r.TeamID = t.TeamID
+  WHERE DATEDIFF(month,dm.Datum, GETDATE()) <= 12
+  GROUP BY r.Namn, r.RadgivarID, t.Team) a
+
+  LEFT JOIN 
+
+  (SELECT DISTINCT r.Namn, rdr.RadgivarID, rdr.Period, rdr.Snitt1 AS 'Snitt'
+  FROM [Datawarehouse].[dw].[Rank_DKI_Radgivare] rdr
+  JOIN dw.Radgivare r On rdr.RadgivarID = r.RadgivarID
+  WHERE Period = '2019-12') b
+
+  ON a.RadgivarID = b.RadgivarID
+  ORDER BY a.[Antal Möten] DESC
