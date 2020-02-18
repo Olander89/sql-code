@@ -1,0 +1,54 @@
+--20455
+--Kunder 
+SELECT DISTINCT k.Pnr
+FROM dw.Kund k
+WHERE k.Aktiv = 'j'
+--Där ForsakringstagareOrgnr motsvarar Pnr och vi har provision
+AND (EXISTS (SELECT 1 FROM dw.Prov_Provision p WHERE p.ForsakringstagareOrgnr = k.Pnr)
+--Eller där kunder har Maxfonder
+OR EXISTS (SELECT 1 FROM dw.MaxfonderKund mk WHERE  mk.KundNr = k.Pnr))
+
+--Kundföretag 
+SELECT DISTINCT kf.Orgnr
+FROM dw.Kundforetag kf
+WHERE kf.Aktiv = 'j'
+-- Vi bör ha fått någon form av ersättning från företaget
+AND (EXISTS (SELECT 1 FROM dw.Prov_Provision p WHERE p.ForsakringstagareOrgnr = kf.Orgnr)
+OR EXISTS (SELECT 1 FROM dw.Arvode ar WHERE ar.Orgnr = kf.Orgnr));
+
+
+--Fråga 20456 "Kunder"
+SELECT DISTINCT k.Pnr INTO #Temp1
+FROM dw.Kund k
+WHERE k.Aktiv = 'j'
+AND (EXISTS (SELECT 1 FROM dw.Prov_Provision p WHERE p.ForsakringstagareOrgnr = k.Pnr AND p.Korning BETWEEN '2019-01-01' AND '2019-12-31')
+OR EXISTS (SELECT 1 FROM dw.MaxfonderKund mk WHERE  mk.KundNr = k.Pnr))
+
+SELECT DISTINCT k.Pnr INTO #Temp2
+FROM dw.Kund k
+WHERE k.Aktiv = 'j'
+AND (EXISTS (SELECT 1 FROM dw.Prov_Provision p WHERE p.ForsakringstagareOrgnr = k.Pnr AND p.Korning BETWEEN '2015-01-01' AND '2018-12-31')
+OR EXISTS (SELECT 1 FROM dw.MaxfonderKund mk WHERE  mk.KundNr = k.Pnr))
+
+SELECT t1.Pnr FROM #Temp1 t1
+LEFT JOIN #Temp2 t2 On t1.Pnr = t2.Pnr
+WHERE t2.pnr IS NULL
+--736 NYA
+
+--Fråga 20456  "Kundföretag"
+SELECT DISTINCT kf.Orgnr INTO #Temp3
+FROM dw.Kundforetag kf
+WHERE kf.Aktiv = 'j'
+AND (EXISTS (SELECT 1 FROM dw.Prov_Provision p WHERE p.ForsakringstagareOrgnr = kf.Orgnr AND p.Korning BETWEEN '2019-01-01' AND '2019-12-31')
+OR EXISTS (SELECT 1 FROM dw.Arvode ar WHERE ar.Orgnr = kf.Orgnr AND ar.Period BETWEEN '2019-01' AND '2019-12'));
+
+SELECT DISTINCT kf.Orgnr INTO #Temp4
+FROM dw.Kundforetag kf
+WHERE kf.Aktiv = 'j'
+AND (EXISTS (SELECT 1 FROM dw.Prov_Provision p WHERE p.ForsakringstagareOrgnr = kf.Orgnr AND p.Korning BETWEEN '2015-01-01' AND '2018-12-31')
+OR EXISTS (SELECT 1 FROM dw.Arvode ar WHERE ar.Orgnr = kf.Orgnr AND ar.Period BETWEEN '2015-01' AND '2018-12'));
+
+SELECT t3.Orgnr FROM #Temp3 t3
+LEFT JOIN #Temp4 t4 On t3.Orgnr = t4.Orgnr
+WHERE t4.Orgnr IS NULL
+--1485 NYA
