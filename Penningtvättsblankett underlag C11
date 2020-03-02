@@ -1,3 +1,9 @@
+-- dbo.tbl_USERVALUES ligger numera på nya SCAN-servern som finns på mm-op-dw-prod under databasen MaxMatthiessen
+-- Steg 1 leta ut all orgnr med de rätta dokumenttyperna
+-- Steg 2 lägg de i en tmp tabell
+-- Steg 3 kör mellersta scriptet
+-- Steg 4 kör scripten för fråga c11 separat sparat 
+
 SELECT DISTINCT u.Orgnr_pnr FROM dbo.tbl_USERVALUES u
 WHERE (u.DokumentTyp = 'Penningtvättsblankett' OR u.DokumentTyp = 'Penningtvättskontroll')
 
