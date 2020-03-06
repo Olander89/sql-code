@@ -1,0 +1,15 @@
+  select KoncernID,
+         Produkttyp,
+         Premie
+  from (select o.KoncernID,
+               f.Produkttyp,
+               f.Premie
+        from sox.orgnr o, sox.kundforetag kf, sox.kund k, sox.forsakring f
+        where kf.TeamID = o.TeamID
+          and kf.Orgnr = o.Orgnr
+          and k.KundforetagID = kf.KundforetagID
+          and f.KundID = k.KundID
+          and (f.Tjp = 'j' or (f.Affarstyp in ('SK', 'Maxplan PC') and (f.Sjuk = 'j' or f.PBF = 'j')))
+		  and f.Produkttyp = 'Alternativ lösning'
+        group by o.KoncernID, f.Produkttyp, f.Premie, k.Pnr) as t
+  group by KoncernID, Produkttyp, Premie
