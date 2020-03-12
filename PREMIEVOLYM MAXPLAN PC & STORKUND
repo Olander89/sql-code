@@ -13,7 +13,7 @@
   WHERE a.firstOccurance > '2019-01-01' AND a.firstOccurance <= '2019-12-31'
   AND (f.Skattekategori IN ('T', 'K') OR f.Skattekategori IS NULL)
   AND fsb.Namn IN ('Skandia', 'Spp Livförsäkring', 'SEB Trygg Liv',
-	'Movestic', 'Länsförsäkringar', 'Folksam', 'Danica Pension', 'AMF Pension')
+	'Movestic', 'Länsförsäkringar', 'Folksam', 'Danica Pension', 'AMF Pension', 'Futur Pension')
   AND f.Status = 'Gällande'
   ORDER BY a.firstOccurance ASC
 
